@@ -2,7 +2,7 @@
 // uso) y rotación de copias antiguas. Pensado para ejecutarse a diario.
 //   DB_PATH=/ruta/inventario.db node scripts/copia.js
 import { DatabaseSync } from 'node:sqlite';
-import { mkdirSync, readdirSync, rmSync, existsSync, statSync } from 'node:fs';
+import { mkdirSync, readdirSync, rmSync, existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -16,8 +16,9 @@ if (!existsSync(fichero)) {
 }
 mkdirSync(carpeta, { recursive: true });
 
-// VACUUM INTO no sobrescribe: el nombre lleva segundos y, si aun así existe, un sufijo.
-const marca = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
+// El nombre lleva la hora con milisegundos: el orden alfabético es el cronológico.
+// VACUUM INTO no sobrescribe, así que si aun así existe se añade un sufijo.
+const marca = new Date().toISOString().slice(0, 23).replace(/[:T.]/g, '-');
 let destino = join(carpeta, `inventario-${marca}.db`);
 for (let n = 2; existsSync(destino); n++) destino = join(carpeta, `inventario-${marca}-${n}.db`);
 const db = new DatabaseSync(fichero);
@@ -25,11 +26,7 @@ db.exec('PRAGMA busy_timeout = 10000');
 db.prepare('VACUUM INTO ?').run(destino);
 db.close();
 
-// De la más antigua a la más reciente (por fecha del fichero, no por nombre).
-const copias = readdirSync(carpeta)
-  .filter((f) => /^inventario-.*\.db$/.test(f))
-  .map((f) => ({ f, t: statSync(join(carpeta, f)).mtimeMs }))
-  .sort((a, b) => a.t - b.t)
-  .map((x) => x.f);
+// De la más antigua a la más reciente.
+const copias = readdirSync(carpeta).filter((f) => /^inventario-.*\.db$/.test(f)).sort();
 for (const vieja of copias.slice(0, Math.max(0, copias.length - mantener))) rmSync(join(carpeta, vieja));
 console.log(`Copia creada: ${destino} (${Math.min(copias.length, mantener)} copias guardadas)`);
