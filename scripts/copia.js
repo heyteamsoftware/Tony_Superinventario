@@ -2,7 +2,7 @@
 // uso) y rotación de copias antiguas. Pensado para ejecutarse a diario.
 //   DB_PATH=/ruta/inventario.db node scripts/copia.js
 import { DatabaseSync } from 'node:sqlite';
-import { mkdirSync, readdirSync, rmSync, existsSync } from 'node:fs';
+import { mkdirSync, readdirSync, rmSync, existsSync, statSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -25,6 +25,11 @@ db.exec('PRAGMA busy_timeout = 10000');
 db.prepare('VACUUM INTO ?').run(destino);
 db.close();
 
-const copias = readdirSync(carpeta).filter((f) => /^inventario-.*\.db$/.test(f)).sort();
+// De la más antigua a la más reciente (por fecha del fichero, no por nombre).
+const copias = readdirSync(carpeta)
+  .filter((f) => /^inventario-.*\.db$/.test(f))
+  .map((f) => ({ f, t: statSync(join(carpeta, f)).mtimeMs }))
+  .sort((a, b) => a.t - b.t)
+  .map((x) => x.f);
 for (const vieja of copias.slice(0, Math.max(0, copias.length - mantener))) rmSync(join(carpeta, vieja));
 console.log(`Copia creada: ${destino} (${Math.min(copias.length, mantener)} copias guardadas)`);
