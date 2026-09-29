@@ -25,7 +25,7 @@ export function montar(raiz) {
       <div class="rejilla-datos">
         <section class="tarjeta tarjeta-cuerpo" style="grid-column:1/-1">
           <div class="titulo-bloque"><h2>Importar material desde Excel (CSV)</h2>
-            <a class="boton pequeno" href="/api/importar/plantilla.csv" download>⭳ Descargar plantilla</a></div>
+            <a class="boton pequeno" href="api/importar/plantilla.csv" download>⭳ Descargar plantilla</a></div>
           <p class="tenue" style="margin-bottom:14px">Columnas obligatorias: <b>Nombre</b>, <b>Familia</b> (nombre o siglas) y <b>Espacio</b> (código como P1-03 o nombre).
             Opcionales: categoría, cantidad, estado, marca, modelo, nº de serie, valor, fecha de adquisición, proveedor, descripción, observaciones.
             En Excel: <i>Archivo → Guardar como → CSV</i>. Primero se comprueba todo el fichero; solo se importa si no hay errores.</p>
@@ -42,8 +42,8 @@ export function montar(raiz) {
           <h2 style="margin-bottom:6px">Exportar y copias</h2>
           <p class="tenue" style="margin-bottom:14px">El inventario se exporta en un CSV que abre Excel directamente. La copia de seguridad es la base de datos completa.</p>
           <div class="acciones" style="flex-direction:column;align-items:stretch">
-            <a class="boton" href="/api/articulos/exportar.csv" download>⭳ Exportar inventario activo</a>
-            <a class="boton" href="/api/articulos/exportar.csv?bajas=incluir" download>⭳ Exportar incluyendo bajas</a>
+            <a class="boton" href="api/articulos/exportar.csv" download>⭳ Exportar inventario activo</a>
+            <a class="boton" href="api/articulos/exportar.csv?bajas=incluir" download>⭳ Exportar incluyendo bajas</a>
             <button type="button" class="boton primario" data-accion="copia">🛟 Descargar copia de seguridad</button>
           </div>
           <p class="tenue pequeno" style="margin-top:12px">Para restaurar una copia, detén el servidor y sustituye <span class="mono">data/inventario.db</span> por el fichero descargado.</p>
@@ -138,7 +138,7 @@ export function montar(raiz) {
     }
   });
 
-  on(raiz, 'click', '[data-accion="copia"]', () => { descargar('/api/copia-seguridad'); aviso('Preparando la copia de seguridad…'); });
+  on(raiz, 'click', '[data-accion="copia"]', () => { descargar('api/copia-seguridad'); aviso('Preparando la copia de seguridad…'); });
 
   $('[data-ajustes]', raiz).addEventListener('submit', async (e) => {
     e.preventDefault();

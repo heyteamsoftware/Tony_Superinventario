@@ -1,0 +1,36 @@
+# Servicio systemd del Superinventario.
+# Instalar en /etc/systemd/system/ y activar con:
+#   sudo systemctl daemon-reload && sudo systemctl enable --now tony-superinventario
+[Unit]
+Description=Tony Superinventario (inventario del instituto)
+After=network.target
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/var/www/html/Tony_Superinventario
+Environment=NODE_ENV=production
+# Solo escucha en local: Apache hace de proxy en /Tony_Superinventario/
+Environment=HOST=127.0.0.1
+Environment=PORT=3100
+# La base de datos vive fuera de la carpeta web.
+Environment=DB_PATH=/var/lib/tony-superinventario/inventario.db
+ExecStart=/usr/local/bin/node src/server.js
+Restart=on-failure
+RestartSec=3
+
+# Endurecimiento: solo puede escribir en su carpeta de datos.
+StateDirectory=tony-superinventario
+StateDirectoryMode=0750
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectKernelTunables=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+
+[Install]
+WantedBy=multi-user.target

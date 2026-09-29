@@ -13,6 +13,8 @@ export function crearApp(db) {
       'X-Content-Type-Options': 'nosniff',
       'Referrer-Policy': 'same-origin',
       'X-Frame-Options': 'SAMEORIGIN',
+      // App interna: que no la indexen los buscadores aunque se publique en Internet.
+      'X-Robots-Tag': 'noindex, nofollow',
       'Content-Security-Policy':
         "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; object-src 'none'; base-uri 'self'",
     });

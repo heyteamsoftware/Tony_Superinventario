@@ -68,7 +68,7 @@ export function montar(raiz, { query }) {
 
   async function cargar() {
     history.replaceState(null, '', `#/inventario${consulta({ ...filtros, orden: filtros.orden === 'codigo' ? '' : filtros.orden, dir: filtros.dir === 'asc' ? '' : filtros.dir, pagina: filtros.pagina > 1 ? filtros.pagina : '' })}`);
-    el.exportar.href = `/api/articulos/exportar.csv${consulta({ ...filtros, pagina: '' })}`;
+    el.exportar.href = `api/articulos/exportar.csv${consulta({ ...filtros, pagina: '' })}`;
     try {
       datos = await api.get(`/articulos${consulta({ ...parametros(), por_pagina: POR_PAGINA })}`);
       pintarTabla();

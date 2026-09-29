@@ -9,7 +9,7 @@ export class ErrorApi extends Error {
 }
 
 async function pedir(metodo, ruta, cuerpo) {
-  const res = await fetch(`/api${ruta}`, {
+  const res = await fetch(`api${ruta}`, {
     method: metodo,
     headers: {
       'X-Usuario': encodeURIComponent(usuarioActual() ?? ''),

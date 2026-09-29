@@ -1,0 +1,4 @@
+# Copia de seguridad diaria del Superinventario (se guardan las últimas 30).
+# Instalar en /etc/cron.d/tony-superinventario
+DB_PATH=/var/lib/tony-superinventario/inventario.db
+30 3 * * * www-data cd /var/www/html/Tony_Superinventario && /usr/local/bin/node scripts/copia.js >/dev/null
