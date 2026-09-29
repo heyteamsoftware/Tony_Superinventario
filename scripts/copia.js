@@ -16,8 +16,10 @@ if (!existsSync(fichero)) {
 }
 mkdirSync(carpeta, { recursive: true });
 
-const marca = new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-');
-const destino = join(carpeta, `inventario-${marca}.db`);
+// VACUUM INTO no sobrescribe: el nombre lleva segundos y, si aun así existe, un sufijo.
+const marca = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
+let destino = join(carpeta, `inventario-${marca}.db`);
+for (let n = 2; existsSync(destino); n++) destino = join(carpeta, `inventario-${marca}-${n}.db`);
 const db = new DatabaseSync(fichero);
 db.exec('PRAGMA busy_timeout = 10000');
 db.prepare('VACUUM INTO ?').run(destino);
