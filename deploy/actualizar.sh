@@ -17,7 +17,7 @@ sudo -u www-data HOME=/tmp npm ci --omit=dev --no-audit --no-fund
 
 if [ -f "$DB_PATH" ]; then
   echo "· Copia de seguridad previa…"
-  sudo -u www-data /usr/local/bin/node scripts/copia.js
+  sudo -u www-data DB_PATH="$DB_PATH" /usr/local/bin/node scripts/copia.js
 fi
 
 echo "· Reiniciando el servicio…"
