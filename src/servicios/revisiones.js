@@ -103,6 +103,20 @@ export function espaciosDeFamilia(db, familiaId) {
   });
 }
 
+// Para el plano: por cada espacio, el estado de revisión de cada familia que
+// tiene material allí o lo usa habitualmente.
+export function revisionesPorEspacio(db) {
+  const mapa = {};
+  for (const { id } of db.prepare('SELECT id FROM familias').all()) {
+    for (const e of espaciosDeFamilia(db, id)) {
+      (mapa[e.espacio_id] ??= []).push({
+        familia_id: id, articulos: e.articulos, unidades: e.unidades, ultimo_repaso: e.ultimo_repaso, revision: e.revision,
+      });
+    }
+  }
+  return mapa;
+}
+
 export function registrarRevision(db, entrada, usuario) {
   const datos = validar({
     familia_id: reglas.entero({ requerido: true, min: 1 }),

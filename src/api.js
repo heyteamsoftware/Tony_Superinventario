@@ -111,6 +111,7 @@ export function crearApi(db) {
     });
   });
   api.get('/plano/ocupacion', (req, res) => res.json(estadisticas.ocupacion(db, req.query)));
+  api.get('/plano/revisiones', (req, res) => res.json(revisiones.revisionesPorEspacio(db)));
   api.get('/movimientos', (req, res) => {
     res.json(estadisticas.listarMovimientos(db, { ...req.query, ...opcionesListado(req.query) }));
   });

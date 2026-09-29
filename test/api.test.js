@@ -187,6 +187,13 @@ describe('búsqueda y filtros', () => {
     assert.ok(varias.items.some((a) => a.familia_codigo === 'SAN'));
   });
 
+  test('por lista de identificadores (etiquetas)', async () => {
+    const todos = (await app.get('/api/articulos?por_pagina=3')).body.items;
+    const ids = todos.map((a) => a.id).join(',');
+    const r = (await app.get(`/api/articulos?ids=${ids},abc`)).body;
+    assert.deepEqual(r.items.map((a) => a.id).sort(), todos.map((a) => a.id).sort());
+  });
+
   test('paginación y orden', async () => {
     const p1 = (await app.get('/api/articulos?por_pagina=2&pagina=1&orden=nombre')).body;
     const p2 = (await app.get('/api/articulos?por_pagina=2&pagina=2&orden=nombre')).body;
@@ -280,6 +287,14 @@ describe('revisiones del inventario', () => {
     const espacios = (await app.get(`/api/familias/${afd}/espacios`)).body;
     assert.ok(espacios.length >= 3);
     assert.ok(espacios.every((e) => e.revision.estado === 'al_dia'));
+  });
+
+  test('estado de revisión por aula para el plano', async () => {
+    const mapa = (await app.get('/api/plano/revisiones')).body;
+    const aula = mapa[app.espacio('P2-01')];
+    const sea = aula.find((r) => r.familia_id === app.familia('SEA'));
+    assert.equal(sea.revision.estado, 'al_dia');
+    assert.equal(sea.articulos, 1);
   });
 
   test('validación de revisiones y ajustes', async () => {

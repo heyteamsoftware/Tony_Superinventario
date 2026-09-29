@@ -75,6 +75,7 @@ export function construirFiltro(filtros = {}) {
     where.push(`${columna} IN (${marcas.join(', ')})`);
   };
 
+  enLista('a.id', String(filtros.ids ?? '').split(',').slice(0, 1000).join(','), 'id');
   enLista('a.familia_id', filtros.familia, 'fam');
   enLista('e.planta_id', filtros.planta, 'pla');
   enLista('a.espacio_id', filtros.espacio, 'esp');
