@@ -419,6 +419,43 @@ describe('importación y exportación', () => {
   });
 });
 
+describe('informe PDF de una familia', () => {
+  test('agrupa por planta y aula en el orden del plano y ordena por nombre', async () => {
+    const f = app.familia('ORI');
+    for (const [nombre, espacio] of [['Zeta', 'PB-06'], ['Alfa', 'PB-06'], ['Beta', 'P2-01'], ['Gamma', 'P1-10']]) {
+      await app.post('/api/articulos', { nombre, familia_id: f, espacio_id: app.espacio(espacio), valor: 10, cantidad: 2 });
+    }
+    const baja = (await app.post('/api/articulos', { nombre: 'Rota', familia_id: f, espacio_id: app.espacio('PB-06') })).body;
+    await app.post(`/api/articulos/${baja.id}/baja`, { motivo: 'Rota' });
+
+    const { datosInforme } = await import('../src/servicios/informes.js');
+    const d = datosInforme(app.db, f);
+    assert.deepEqual(d.plantas.map((p) => p.nombre), ['Planta 2ª', 'Planta 1ª', 'Planta baja']);
+    assert.deepEqual(d.plantas.at(-1).espacios[0].articulos.map((a) => a.nombre), ['Alfa', 'Zeta']);
+    assert.deepEqual(d.totales, { articulos: 4, unidades: 8, valor: 80, espacios: 3, bajas: 0 });
+
+    const conBajas = datosInforme(app.db, f, { bajas: true });
+    assert.equal(conBajas.totales.bajas, 1);
+    assert.deepEqual(conBajas.plantas.at(-1).espacios[0].articulos.map((a) => a.nombre), ['Alfa', 'Rota', 'Zeta']);
+  });
+
+  test('devuelve un PDF descargable', async () => {
+    const res = await app.get(`/api/familias/${app.familia('ORI')}/inventario.pdf?valores=1&bajas=1&por=${encodeURIComponent('Ana 🙂')}`, { crudo: true });
+    assert.equal(res.status, 200);
+    assert.equal(res.headers.get('content-type'), 'application/pdf');
+    assert.match(res.headers.get('content-disposition'), /inline; filename="inventario-ORI-\d{4}-\d{2}-\d{2}\.pdf"/);
+    const bytes = Buffer.from(await res.arrayBuffer());
+    assert.equal(bytes.subarray(0, 5).toString(), '%PDF-');
+    assert.ok(bytes.length > 5000);
+  });
+
+  test('familia sin material y familia inexistente', async () => {
+    const vacia = await app.get(`/api/familias/${app.familia('RAD')}/inventario.pdf`, { crudo: true });
+    assert.equal(vacia.status, 200);
+    assert.equal((await app.get('/api/familias/9999/inventario.pdf')).status, 404);
+  });
+});
+
 describe('panel y historial', () => {
   test('estadísticas coherentes con el listado', async () => {
     const est = (await app.get('/api/estadisticas')).body;

@@ -19,6 +19,7 @@ No usa contraseñas: al entrar se pide el nombre, que queda en el historial de c
 - **Revisiones del inventario**: cada familia confirma, aula por aula o entera, que su material coincide (marcando cada artículo). También cuentan como repaso las altas, bajas, traslados y ediciones.
   - Si una familia pasa **más de 365 días** sin repasar su inventario aparece un aviso en el plano, en el menú y en su ficha (el plazo y el preaviso se configuran en *Datos*).
 - **Tabla de inventario** con búsqueda sin tildes, filtros, orden, paginación y acciones en lote (trasladar, cambiar estado, imprimir etiquetas).
+- **Inventario de una familia en PDF**, ordenado por planta y aula (y por nombre dentro de cada aula), con subtotales, estado de revisión, casilla por artículo para la revisión física y bloque de firma. Opcionalmente con valor económico y bajas. Desde *Familias*, *Inventario* o *Datos*.
 - **Importación desde Excel (CSV)** con comprobación previa: o entran todas las filas o ninguna, con un informe de errores por fila. La **exportación** abre directamente en Excel y se puede volver a importar.
 - **Copia de seguridad** de la base de datos con un clic.
 - **Etiquetas QR** imprimibles: al escanearlas con el móvil (en la red del centro) se abre la ficha del artículo.
@@ -107,7 +108,7 @@ scripts/demo.js          genera una base de datos de ejemplo
 
 Decisiones técnicas:
 
-- **Sin compilación ni dependencias nativas**: Express, `qrcode` y el SQLite integrado de Node. Se instala en cualquier PC del centro con `npm install`.
+- **Sin compilación ni dependencias nativas**: Express, `qrcode`, `pdfkit` y el SQLite integrado de Node. Se instala en cualquier PC del centro con `npm install`.
 - **Integridad**: claves foráneas, restricciones `CHECK`, transacciones en todas las operaciones compuestas y un historial de movimientos que no se modifica. Los códigos de inventario (`SAN-00012`) no cambian ni se reutilizan.
 - **Seguridad** (aunque sea una app interna): todo el HTML se genera escapando los datos, consultas parametrizadas, `Content-Security-Policy` estricta y protección contra fórmulas en los CSV exportados.
 - **Plano**: la geometría de cada espacio está en `src/db/semilla.js`. Los nombres, grupos y familias habituales de cada aula se editan desde la aplicación (*Datos → Espacios del plano*).

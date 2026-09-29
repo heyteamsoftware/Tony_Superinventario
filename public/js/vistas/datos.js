@@ -5,6 +5,7 @@ import {
   html, pintar, on, $, plural, numero, abrirDialogo, confirmar, leerFormulario, aviso, avisoError, descargar,
 } from '../ui.js';
 import { dialogoEspacio } from '../componentes/revision.js';
+import { dialogoInformeFamilia } from '../componentes/informe.js';
 
 // Excel en español suele guardar los CSV en Windows-1252, no en UTF-8: si al
 // leer como UTF-8 aparecen caracteres inválidos, se relee en esa codificación.
@@ -44,6 +45,7 @@ export function montar(raiz) {
           <div class="acciones" style="flex-direction:column;align-items:stretch">
             <a class="boton" href="api/articulos/exportar.csv" download>⭳ Exportar inventario activo</a>
             <a class="boton" href="api/articulos/exportar.csv?bajas=incluir" download>⭳ Exportar incluyendo bajas</a>
+            <button type="button" class="boton" data-accion="pdf-familia">📄 Inventario de una familia en PDF</button>
             <button type="button" class="boton primario" data-accion="copia">🛟 Descargar copia de seguridad</button>
           </div>
           <p class="tenue pequeno" style="margin-top:12px">Para restaurar una copia, detén el servidor y sustituye <span class="mono">data/inventario.db</span> por el fichero descargado.</p>
@@ -138,6 +140,7 @@ export function montar(raiz) {
     }
   });
 
+  on(raiz, 'click', '[data-accion="pdf-familia"]', () => dialogoInformeFamilia());
   on(raiz, 'click', '[data-accion="copia"]', () => { descargar('api/copia-seguridad'); aviso('Preparando la copia de seguridad…'); });
 
   $('[data-ajustes]', raiz).addEventListener('submit', async (e) => {

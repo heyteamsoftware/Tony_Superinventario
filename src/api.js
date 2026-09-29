@@ -10,6 +10,7 @@ import * as catalogo from './servicios/catalogo.js';
 import * as estadisticas from './servicios/estadisticas.js';
 import * as datos from './servicios/datos.js';
 import * as revisiones from './servicios/revisiones.js';
+import * as informes from './servicios/informes.js';
 
 // Sin contraseñas: cada petición lleva el nombre de quien la hace en la
 // cabecera X-Usuario (codificada con encodeURIComponent) para el historial.
@@ -57,6 +58,17 @@ export function crearApi(db) {
 
   api.get('/familias', (req, res) => res.json(revisiones.familiasConRevision(db)));
   api.get('/familias/:id/espacios', (req, res) => res.json(revisiones.espaciosDeFamilia(db, id(req))));
+  // Informe PDF del inventario de una familia, ordenado por aula. Se abre con
+  // un enlace normal, así que el nombre de quien lo genera va en ?por=
+  api.get('/familias/:id/inventario.pdf', async (req, res) => {
+    const { pdf, familia } = await informes.pdfInventarioFamilia(db, id(req), {
+      bajas: req.query.bajas === '1',
+      valores: req.query.valores === '1',
+      usuario: String(req.query.por ?? '').slice(0, 80),
+    });
+    const nombre = `inventario-${familia.codigo}-${new Date().toISOString().slice(0, 10)}.pdf`;
+    res.type('application/pdf').set('Content-Disposition', `inline; filename="${nombre}"`).send(pdf);
+  });
   api.post('/familias', (req, res) => res.status(201).json(catalogo.crearFamilia(db, req.body)));
   api.patch('/familias/:id', (req, res) => res.json(catalogo.actualizarFamilia(db, id(req), req.body)));
 

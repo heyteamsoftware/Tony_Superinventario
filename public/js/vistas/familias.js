@@ -5,6 +5,7 @@ import {
   html, pintar, on, numero, euros, plural, haceTiempo, fecha, revisionBadge, abrirDialogo, leerFormulario, aviso, avisoError,
 } from '../ui.js';
 import { dialogoRevision } from '../componentes/revision.js';
+import { dialogoInformeFamilia } from '../componentes/informe.js';
 
 const GRAVEDAD = { vencida: 0, nunca: 1, pronto: 2, al_dia: 3 };
 
@@ -115,6 +116,7 @@ export function montar(raiz) {
                 <a class="boton pequeno" href="#/plano?familia=${f.id}&modo=revision">🗺 Plano</a>
                 <a class="boton pequeno" href="#/inventario?familia=${f.id}">☰ Inventario</a>
                 <button type="button" class="boton pequeno" data-aulas="${f.id}">Por aula</button>
+                <button type="button" class="boton pequeno" data-pdf="${f.id}" title="Inventario de la familia por aulas en PDF">📄 PDF</button>
                 <button type="button" class="boton pequeno exito" data-revisar="${f.id}" style="margin-left:auto">✓ Revisar</button>
               </div>
             </article>`)}
@@ -123,6 +125,7 @@ export function montar(raiz) {
   }
 
   on(raiz, 'click', '[data-accion="nueva"]', () => dialogoFamilia().catch(avisoError));
+  on(raiz, 'click', '[data-pdf]', (e, b) => dialogoInformeFamilia({ familia_id: Number(b.dataset.pdf) }));
   on(raiz, 'click', '[data-accion="revisar"]', () => dialogoRevision());
   on(raiz, 'click', '[data-editar]', (e, b) => dialogoFamilia(familia(b.dataset.editar)).catch(avisoError));
   on(raiz, 'click', '[data-revisar]', (e, b) => dialogoRevision({ familia_id: Number(b.dataset.revisar) }));

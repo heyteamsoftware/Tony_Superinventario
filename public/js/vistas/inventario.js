@@ -8,6 +8,7 @@ import {
 import {
   formularioArticulo, abrirFicha, opcionesEspacios, opcionesFamilias, opcionesCategorias, opcionesEstados,
 } from '../componentes/articulo.js';
+import { dialogoInformeFamilia } from '../componentes/informe.js';
 
 const FILTROS = ['q', 'familia', 'planta', 'espacio', 'categoria', 'estado', 'bajas', 'orden', 'dir', 'pagina'];
 const POR_PAGINA = 50;
@@ -36,6 +37,7 @@ export function montar(raiz, { query }) {
         <div class="titulo"><h1>Inventario</h1><p data-resumen>Todo el material del centro en una tabla.</p></div>
         <div class="acciones">
           <a class="boton" data-exportar href="#">⭳ Exportar a Excel</a>
+          <button type="button" class="boton" data-accion="pdf">📄 PDF por familia</button>
           <button type="button" class="boton primario" data-accion="nuevo">＋ Nuevo artículo</button>
         </div>
       </div>
@@ -193,6 +195,7 @@ export function montar(raiz, { query }) {
     abrirFicha(id);
   });
   on(el.paginacion, 'click', '[data-pagina]', (e, b) => { filtros.pagina = b.dataset.pagina; cargar(); raiz.scrollIntoView(); });
+  on(raiz, 'click', '[data-accion="pdf"]', () => dialogoInformeFamilia({ familia_id: Number(String(filtros.familia).split(',')[0]) || null }));
   on(raiz, 'click', '[data-accion="nuevo"]', () => formularioArticulo({
     valores: { familia_id: Number(filtros.familia) || null, espacio_id: Number(filtros.espacio) || null },
   }));
