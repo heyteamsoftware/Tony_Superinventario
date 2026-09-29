@@ -1,4 +1,4 @@
-# Superinventario
+# Superinventario · CIFP Tony Gallardo
 
 Aplicación web interna para gestionar el inventario del centro **aula por aula, sobre el plano del edificio**.
 Cada familia profesional puede tener material en cualquier espacio, y todo queda registrado: quién lo dio de alta,

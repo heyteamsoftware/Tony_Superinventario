@@ -9,7 +9,7 @@ const FICHERO_DB = process.env.DB_PATH || fileURLToPath(new URL('../data/inventa
 
 const db = abrirDb(FICHERO_DB);
 const servidor = crearApp(db).listen(PUERTO, HOST, () => {
-  console.log(`\n  Superinventario en marcha`);
+  console.log(`\n  Superinventario CIFP Tony Gallardo en marcha`);
   console.log(`  · En este equipo:   http://localhost:${PUERTO}`);
   // Solo se anuncian las IP de la red si se escucha en todas las interfaces.
   const todasLasInterfaces = HOST === '0.0.0.0' || HOST === '::';

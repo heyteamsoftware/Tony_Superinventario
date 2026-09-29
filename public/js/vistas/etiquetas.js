@@ -32,6 +32,7 @@ export async function montar(raiz, { query }) {
               <div class="nom">${a.nombre}</div>
               <div class="lug">${a.espacio_codigo} · ${a.espacio_nombre}</div>
               <span class="fam">${a.familia_nombre}</span>
+              <div class="centro">CIFP Tony Gallardo</div>
             </div>
           </div>`)}
       </div>` : html`<div class="vacio">No hay artículos que etiquetar. Selecciónalos en el inventario.</div>`}

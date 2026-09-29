@@ -1,7 +1,7 @@
 {
   "name": "superinventario",
   "version": "1.0.0",
-  "description": "Gestión del inventario del instituto por plantas, espacios y familias profesionales",
+  "description": "Superinventario del CIFP Tony Gallardo: gestión del inventario por plantas, espacios y familias profesionales",
   "private": true,
   "type": "module",
   "main": "src/server.js",
