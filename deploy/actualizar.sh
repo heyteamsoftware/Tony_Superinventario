@@ -9,8 +9,12 @@ SERVICIO=tony-superinventario
 export DB_PATH="$DATOS/inventario.db"
 
 cd "$APP"
-echo "· Descargando cambios…"
-sudo -u www-data git pull --ff-only
+if [ -z "${YA_DESCARGADO:-}" ]; then
+  echo "· Descargando cambios…"
+  sudo -u www-data git pull --ff-only
+  # El pull puede haber cambiado este mismo script: se relanza la versión nueva.
+  YA_DESCARGADO=1 exec bash "$APP/deploy/actualizar.sh" "$@"
+fi
 
 echo "· Instalando dependencias…"
 sudo -u www-data HOME=/tmp npm ci --omit=dev --no-audit --no-fund
