@@ -66,7 +66,7 @@ Publicada en **https://myappsserver.duckdns.org/Tony_Superinventario/**, junto a
 | Base de datos y copias diarias | `/var/lib/tony-superinventario/` (fuera de la carpeta web) |
 | Servicio | `tony-superinventario` (systemd, `deploy/tony-superinventario.service`), escucha solo en `127.0.0.1:3100` |
 | Apache | proxy inverso de `/Tony_Superinventario/` (`deploy/apache-superinventario.conf`) |
-| Node.js | binario oficial en `/opt/node`, enlazado en `/usr/local/bin/node` |
+| Node.js | binario oficial (v24) en `/opt/node/actual`, enlazado en `/usr/local/bin/node` |
 | Copia diaria | 03:30, se guardan 30 (`deploy/cron-copias` → `/etc/cron.d/tony-superinventario`) |
 
 Actualizar a la última versión de GitHub (hace copia de seguridad antes de reiniciar):

@@ -24,7 +24,7 @@ echo "· Reiniciando el servicio…"
 systemctl restart "$SERVICIO"
 for i in $(seq 1 15); do
   if curl -fsS http://127.0.0.1:3100/api/meta >/dev/null 2>&1; then
-    echo "✔ Superinventario actualizado ($(git log -1 --format='%h %s'))"
+    echo "✔ Superinventario actualizado ($(sudo -u www-data git log -1 --format='%h %s'))"
     exit 0
   fi
   sleep 1

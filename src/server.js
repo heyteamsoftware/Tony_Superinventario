@@ -11,7 +11,9 @@ const db = abrirDb(FICHERO_DB);
 const servidor = crearApp(db).listen(PUERTO, HOST, () => {
   console.log(`\n  Superinventario en marcha`);
   console.log(`  · En este equipo:   http://localhost:${PUERTO}`);
-  for (const ifaces of Object.values(networkInterfaces())) {
+  // Solo se anuncian las IP de la red si se escucha en todas las interfaces.
+  const todasLasInterfaces = HOST === '0.0.0.0' || HOST === '::';
+  for (const ifaces of todasLasInterfaces ? Object.values(networkInterfaces()) : []) {
     for (const i of ifaces ?? []) {
       if (i.family === 'IPv4' && !i.internal) console.log(`  · En la red local:  http://${i.address}:${PUERTO}`);
     }
