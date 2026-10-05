@@ -1,4 +1,4 @@
-import { Router, json } from 'express';
+import { Router, json, raw } from 'express';
 import { rmSync, mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -12,6 +12,7 @@ import * as datos from './servicios/datos.js';
 import * as revisiones from './servicios/revisiones.js';
 import * as informes from './servicios/informes.js';
 import * as alumnado from './servicios/alumnado.js';
+import * as fotos from './servicios/fotos.js';
 import { crearApiAlumno } from './api-alumno.js';
 
 // Sin contraseñas: cada petición lleva el nombre de quien la hace en la
@@ -41,10 +42,14 @@ const opcionesListado = (q) => ({
   dir: q.dir,
 });
 
-export function crearApi(db) {
+export function crearApi(db, { dirFotos = null } = {}) {
   const api = Router();
+  // Quita del disco las fotos que ya no usa ningún artículo. Nunca debe romper la petición.
+  const barrerFotos = () => {
+    try { fotos.purgarHuerfanas(db, dirFotos); } catch (err) { console.error('No se pudieron limpiar fotos:', err.message); }
+  };
   // Acceso del alumnado por QR: va antes que nada, con su propio límite de tamaño.
-  api.use('/alumno', crearApiAlumno(db));
+  api.use('/alumno', crearApiAlumno(db, { dirFotos }));
   api.use(json({ limit: '10mb' }));
 
   // ── Catálogo ───────────────────────────────────────────────────────────
@@ -97,6 +102,27 @@ export function crearApi(db) {
     res.status(204).end();
   });
 
+  // ── Fotos ──────────────────────────────────────────────────────────────
+  // La foto se sube aparte (cuerpo = la imagen) y luego se asocia al artículo
+  // con foto_id. El servidor la reduce, la recodifica y le quita los metadatos.
+  api.get('/fotos/uso', (req, res) => res.json(fotos.usoFotos(db)));
+  api.post('/fotos', raw({ type: 'image/*', limit: fotos.LIMITES.subidaMax }), async (req, res) => {
+    res.status(201).json(await fotos.guardarFoto(db, dirFotos, req.body, { origen: 'app', usuario: usuarioDe(req) }));
+  });
+  const servirFoto = (miniatura) => (req, res) => {
+    if (!dirFotos || !fotos.esIdFoto(req.params.id)) throw new ErrorApi(404, 'Foto no encontrada');
+    // El nombre es un identificador aleatorio que nunca cambia: caché larga.
+    // Con "root" solo cuenta el nombre del fichero (el id ya está validado): así no
+    // influye cómo se llamen las carpetas de la ruta (p. ej. una que empiece por punto).
+    res.sendFile(`${req.params.id}${miniatura ? '-m' : ''}.webp`, {
+      root: dirFotos, maxAge: '365d', immutable: true, headers: { 'Content-Type': 'image/webp' },
+    }, (err) => {
+      if (err && !res.headersSent) res.status(404).json({ error: 'Foto no encontrada' });
+    });
+  };
+  api.get('/fotos/:id', servirFoto(false));
+  api.get('/fotos/:id/miniatura', servirFoto(true));
+
   // ── Artículos ──────────────────────────────────────────────────────────
   api.get('/articulos', (req, res) => {
     res.json(articulos.listar(db, req.query, opcionesListado(req.query)));
@@ -117,12 +143,17 @@ export function crearApi(db) {
     const art = articulos.obtener(db, id(req));
     res.json({ ...art, movimientos: articulos.movimientosDe(db, art.id) });
   });
-  api.patch('/articulos/:id', (req, res) => res.json(articulos.actualizar(db, id(req), req.body, usuarioDe(req))));
+  api.patch('/articulos/:id', (req, res) => {
+    const art = articulos.actualizar(db, id(req), req.body, usuarioDe(req));
+    barrerFotos(); // por si se ha cambiado o quitado la foto
+    res.json(art);
+  });
   api.post('/articulos/:id/traslado', (req, res) => res.json(articulos.trasladar(db, id(req), req.body, usuarioDe(req))));
   api.post('/articulos/:id/baja', (req, res) => res.json(articulos.darDeBaja(db, id(req), req.body, usuarioDe(req))));
   api.post('/articulos/:id/reactivar', (req, res) => res.json(articulos.reactivar(db, id(req), req.body, usuarioDe(req))));
   api.delete('/articulos/:id', (req, res) => {
     articulos.eliminar(db, id(req), usuarioDe(req));
+    barrerFotos();
     res.status(204).end();
   });
 

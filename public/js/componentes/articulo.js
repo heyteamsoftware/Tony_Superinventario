@@ -1,6 +1,7 @@
 import { api } from '../api.js';
 import { meta, familia, espacio } from '../estado.js';
 import { notificarCambio } from '../cambios.js';
+import { campoFoto, activarCampoFoto, fotoSubiendo, reiniciarCampoFoto, urlFoto } from './foto-campo.js';
 import {
   html, pintar, abrirDialogo, crearModal, confirmar, leerFormulario, aviso, avisoError, on, $,
   estadoBadge, chipFamilia, euros, fecha, fechaHora, haceTiempo, numero, ESTADOS,
@@ -65,6 +66,8 @@ export async function formularioArticulo({ articulo = null, valores = {} } = {})
         <label class="campo c2"><span>Ubicación dentro del aula</span>
           <input name="ubicacion_detalle" value="${a.ubicacion_detalle ?? ''}" maxlength="200" placeholder="Armario 2, balda 3"></label>
 
+        ${campoFoto(a.foto_id)}
+
         <div class="separador">Identificación y compra</div>
         <label class="campo c2"><span>Marca</span><input name="marca" value="${a.marca ?? ''}" maxlength="200"></label>
         <label class="campo c2"><span>Modelo</span><input name="modelo" value="${a.modelo ?? ''}" maxlength="200"></label>
@@ -83,7 +86,9 @@ export async function formularioArticulo({ articulo = null, valores = {} } = {})
       <button type="button" class="boton" data-cerrar>${edicion ? 'Cancelar' : 'Cerrar'}</button>
       ${edicion ? '' : html`<button type="submit" class="boton" value="otro">Guardar y añadir otro</button>`}
       <button type="submit" class="boton primario" value="guardar">Guardar</button>`,
+    alAbrir: (d, form) => activarCampoFoto(form),
     alEnviar: async (form, boton) => {
+      if (fotoSubiendo(form)) throw new Error('Espera un momento: la foto todavía se está subiendo.');
       const datos = leerFormulario(form);
       if (edicion) {
         const guardado = await api.patch(`/articulos/${articulo.id}`, datos);
@@ -107,6 +112,7 @@ export async function formularioArticulo({ articulo = null, valores = {} } = {})
         form.elements[campo].value = '';
       }
       form.elements.cantidad.value = 1;
+      reiniciarCampoFoto(form);
       form.querySelector('[data-contador]').textContent = `${altas} ${altas === 1 ? 'artículo añadido' : 'artículos añadidos'} · último: ${creado.codigo}`;
       form.elements.nombre.focus();
       aviso(`${creado.codigo} · ${creado.nombre} añadido`);
@@ -208,7 +214,7 @@ async function eliminar(articulo) {
 
 // ── Historial ──────────────────────────────────────────────────────────────
 const CAMPOS = {
-  nombre: 'Nombre', descripcion: 'Descripción', familia: 'Familia', categoria: 'Categoría', cantidad: 'Cantidad',
+  nombre: 'Nombre', foto: 'Foto', descripcion: 'Descripción', familia: 'Familia', categoria: 'Categoría', cantidad: 'Cantidad',
   ubicacion_detalle: 'Ubicación', marca: 'Marca', modelo: 'Modelo', numero_serie: 'Nº de serie', valor: 'Valor',
   fecha_adquisicion: 'Fecha de adquisición', proveedor: 'Proveedor', observaciones: 'Observaciones',
 };
@@ -283,6 +289,8 @@ export async function abrirFicha(id) {
       </div>
       <div class="modal-cuerpo">
         ${baja ? html`<div class="alerta aviso"><span class="ico">⊘</span><div class="texto">Dado de baja el ${fecha(a.fecha_baja)}: <b>${a.motivo_baja}</b></div></div>` : ''}
+        ${a.foto_id ? html`<a class="ficha-foto" href="${urlFoto(a.foto_id)}" target="_blank" rel="noopener" title="Ver la foto a tamaño completo">
+          <img src="${urlFoto(a.foto_id)}" alt="Foto de ${a.nombre}"></a>` : ''}
         <dl class="datos">
           ${dato('Cantidad', html`<b style="font-size:18px">${numero(a.cantidad)}</b> ${a.cantidad === 1 ? 'unidad' : 'unidades'}`)}
           ${dato('Categoría', a.categoria_nombre)}

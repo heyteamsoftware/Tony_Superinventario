@@ -1,10 +1,11 @@
 import express from 'express';
 import { fileURLToPath } from 'node:url';
+import { resolve } from 'node:path';
 import { crearApi } from './api.js';
 
 const PUBLICO = fileURLToPath(new URL('../public', import.meta.url));
 
-export function crearApp(db) {
+export function crearApp(db, { dirFotos = null } = {}) {
   const app = express();
   app.disable('x-powered-by');
 
@@ -21,7 +22,8 @@ export function crearApp(db) {
     next();
   });
 
-  app.use('/api', crearApi(db));
+  // Ruta absoluta siempre: res.sendFile no admite relativas y el cwd puede cambiar.
+  app.use('/api', crearApi(db, { dirFotos: dirFotos ? resolve(dirFotos) : null }));
   app.use(express.static(PUBLICO, { index: 'index.html' }));
   return app;
 }

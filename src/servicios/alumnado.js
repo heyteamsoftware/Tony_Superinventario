@@ -1,8 +1,8 @@
 import { randomBytes } from 'node:crypto';
 import { reglas, validar } from '../lib/validar.js';
-import { ErrorApi, noEncontrado } from '../lib/errores.js';
+import { ErrorApi, noEncontrado, datosNoValidos } from '../lib/errores.js';
 import { crearLimitador } from '../lib/limitador.js';
-import { crear, ESTADOS_ACTIVOS } from './articulos.js';
+import { crear, ESTADOS_ACTIVOS, reglaFoto } from './articulos.js';
 import { listarCategorias } from './catalogo.js';
 
 // Acceso del alumnado por QR: cada familia tiene un token secreto. Con él solo
@@ -20,8 +20,9 @@ const FORMATO_TOKEN = /^[A-Za-z0-9_-]{20,64}$/;
 // bloqueo por IP dejaría sin acceso a toda la clase si un alumno trasteara.
 export const limites = {
   altas: crearLimitador({ ventanaMs: 10 * 60_000, max: 200 }),
+  fotos: crearLimitador({ ventanaMs: 10 * 60_000, max: 200 }),
 };
-setInterval(() => limites.altas.limpiar(), 10 * 60_000).unref();
+setInterval(() => { limites.altas.limpiar(); limites.fotos.limpiar(); }, 10 * 60_000).unref();
 
 // ── Gestión del token (lado profesorado) ─────────────────────────────────
 
@@ -84,12 +85,18 @@ const ESQUEMA_ALTA = {
   modelo: texto({ max: 200 }),
   numero_serie: texto({ max: 200 }),
   observaciones: texto({ max: 1000 }),
+  foto_id: reglaFoto(),
 };
 
 // Alta de material. La familia sale SIEMPRE del token; se ignora cualquier
 // otro campo que venga en la petición (valor, proveedor, familia, etc.).
 export function altaAlumno(db, familia, entrada) {
   const { alumno, ...datos } = validar(ESQUEMA_ALTA, entrada);
+  // Solo puede usar una foto que se subió con el QR de esta misma familia.
+  if (datos.foto_id) {
+    const foto = db.prepare('SELECT origen FROM fotos WHERE id = ?').get(datos.foto_id);
+    if (foto?.origen !== `qr:${familia.codigo}`) throw datosNoValidos({ foto_id: 'La foto no es válida. Súbela de nuevo.' });
+  }
   const art = crear(db, { ...datos, familia_id: familia.id }, `${alumno} (QR)`, { detalleAlta: { via: 'qr' } });
   return {
     id: art.id,

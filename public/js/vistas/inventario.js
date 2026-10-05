@@ -9,6 +9,7 @@ import {
   formularioArticulo, abrirFicha, opcionesEspacios, opcionesFamilias, opcionesCategorias, opcionesEstados,
 } from '../componentes/articulo.js';
 import { dialogoInformeFamilia } from '../componentes/informe.js';
+import { urlFoto } from '../componentes/foto-campo.js';
 
 const FILTROS = ['q', 'familia', 'planta', 'espacio', 'categoria', 'estado', 'bajas', 'orden', 'dir', 'pagina'];
 const POR_PAGINA = 50;
@@ -104,7 +105,8 @@ export function montar(raiz, { query }) {
               return html`<tr class="clicable ${seleccion.has(a.id) ? 'seleccionada' : ''} ${a.estado === 'baja' ? 'baja' : ''}" data-id="${a.id}">
                 <td class="col-check"><input type="checkbox" data-sel ${seleccion.has(a.id) ? 'checked' : ''} aria-label="Seleccionar ${a.codigo}"></td>
                 <td class="mono">${a.codigo}</td>
-                <td><div class="principal">${a.nombre}</div><div class="secundario">${[a.marca, a.modelo, a.numero_serie && `S/N ${a.numero_serie}`].filter(Boolean).join(' · ')}</div></td>
+                <td><div class="celda-articulo">${a.foto_id ? html`<img class="mini-foto" src="${urlFoto(a.foto_id, true)}" alt="" loading="lazy">` : ''}
+                  <div><div class="principal">${a.nombre}</div><div class="secundario">${[a.marca, a.modelo, a.numero_serie && `S/N ${a.numero_serie}`].filter(Boolean).join(' · ')}</div></div></div></td>
                 <td>${chipFamilia(f, { corto: true })}</td>
                 <td><a href="#/plano?espacio=${a.espacio_id}" data-ir-plano title="Ver en el plano"><span class="mono">${a.espacio_codigo}</span></a>
                   <div class="secundario">${a.espacio_nombre}</div></td>

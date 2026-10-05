@@ -1,5 +1,6 @@
 import { html, pintar, $, $$, on, aviso } from '../js/ui.js';
 import { iniciales } from '../js/usuario.js';
+import { comprimirFoto, kb } from '../js/foto.js';
 
 // Interfaz móvil del alumnado. El QR de cada familia trae un código secreto
 // (?t=...) que solo permite VER el formulario de alta y AÑADIR material de esa
@@ -43,6 +44,21 @@ async function llamar(ruta, cuerpo) {
   if (!res.ok) {
     throw Object.assign(new Error(respuesta?.error ?? `Error ${res.status}`), { status: res.status, detalles: respuesta?.detalles ?? null });
   }
+  return respuesta;
+}
+
+async function subirFoto(blob) {
+  let res;
+  try {
+    res = await fetch(new URL(`../api/alumno/${encodeURIComponent(token)}/fotos`, location.href), {
+      method: 'POST', headers: { 'Content-Type': blob.type || 'application/octet-stream' }, body: blob,
+    });
+  } catch {
+    throw new Error('No hay conexión. Comprueba el wifi o los datos y vuelve a intentarlo.');
+  }
+  let respuesta = null;
+  try { respuesta = await res.json(); } catch { /* sin cuerpo */ }
+  if (!res.ok) throw new Error(respuesta?.error ?? `Error ${res.status}`);
   return respuesta;
 }
 
@@ -118,6 +134,18 @@ function pantallaFormulario() {
       <label class="campo"><span class="obligatorio">¿Qué material es?</span>
         <input name="nombre" maxlength="200" autocomplete="off" autocapitalize="sentences" enterkeyhint="done"
                placeholder="Ej.: Ordenador portátil, Camilla…"></label>
+
+      <div class="campo" data-foto>
+        <span>Foto (opcional)</span>
+        <input type="file" accept="image/*" hidden data-foto-fichero>
+        <button type="button" class="foto-boton" data-foto-elegir>
+          <span class="foto-previa-al" data-foto-previa aria-hidden="true">📷</span>
+          <span class="foto-texto"><b data-foto-titulo>Hacer o elegir una foto</b>
+            <small data-foto-estado>Se reduce sola: casi no gasta datos</small></span>
+        </button>
+        <button type="button" class="enlace" data-foto-quitar hidden>Quitar la foto</button>
+        <input type="hidden" name="foto_id" value="">
+      </div>
 
       <div class="campo"><span>Cantidad</span>
         <div class="stepper">
@@ -199,8 +227,10 @@ async function guardarAlta(form) {
     modelo: f.modelo.value,
     numero_serie: f.numero_serie.value,
     observaciones: f.observaciones.value,
+    foto_id: f.foto_id.value || null,
   };
 
+  if (subiendoFoto) { mostrarBanner(form, 'Espera un momento: la foto todavía se está subiendo.'); return; }
   const errores = {};
   if (!cuerpo.espacio_id) errores.espacio_id = 'Elige el aula donde está el material';
   if (!cuerpo.nombre.trim()) errores.nombre = 'Escribe qué material es';
@@ -233,6 +263,7 @@ async function guardarAlta(form) {
     // Listo para el siguiente: se conservan aula, estado, categoría y ubicación.
     for (const campo of ['nombre', 'marca', 'modelo', 'numero_serie', 'observaciones']) f[campo].value = '';
     f.cantidad.value = 1;
+    reiniciarFoto(form);
     $('[data-exito]', form).scrollIntoView({ block: 'nearest', behavior: 'smooth' });
     f.nombre.focus({ preventScroll: true });
     navigator.vibrate?.(30);
@@ -245,6 +276,40 @@ async function guardarAlta(form) {
   } finally {
     const actual = $('[data-guardar]', raiz);
     if (actual) { actual.disabled = false; actual.textContent = 'Guardar material'; }
+  }
+}
+
+// ── Foto ───────────────────────────────────────────────────────────────────
+let subiendoFoto = false;
+
+function reiniciarFoto(form) {
+  form.elements.foto_id.value = '';
+  $('[data-foto-previa]', form).textContent = '📷';
+  $('[data-foto-titulo]', form).textContent = 'Hacer o elegir una foto';
+  const estado = $('[data-foto-estado]', form);
+  estado.textContent = 'Se reduce sola: casi no gasta datos';
+  estado.classList.remove('error');
+  $('[data-foto-quitar]', form).hidden = true;
+}
+
+async function procesarFoto(form, archivo) {
+  const estado = $('[data-foto-estado]', form);
+  const marcar = (texto, error = false) => { estado.textContent = texto; estado.classList.toggle('error', error); };
+  subiendoFoto = true;
+  try {
+    marcar('Preparando la foto…');
+    const blob = await comprimirFoto(archivo);
+    marcar(`Subiendo ${kb(blob.size)}…`);
+    const subida = await subirFoto(blob);
+    form.elements.foto_id.value = subida.id;
+    pintar($('[data-foto-previa]', form), html`<img src="../api/fotos/${subida.id}/miniatura" alt="Tu foto">`);
+    $('[data-foto-titulo]', form).textContent = 'Cambiar la foto';
+    $('[data-foto-quitar]', form).hidden = false;
+    marcar(`Foto lista · ${kb(subida.bytes)}`);
+  } catch (err) {
+    marcar(err.message || 'No se ha podido subir la foto.', true);
+  } finally {
+    subiendoFoto = false;
   }
 }
 
@@ -264,6 +329,14 @@ raiz.addEventListener('submit', (e) => {
   else if (e.target.matches('[data-alta]')) guardarAlta(e.target);
 });
 on(raiz, 'click', '[data-cambiar]', () => pantallaNombre());
+on(raiz, 'click', '[data-foto-elegir]', () => { if (!subiendoFoto) $('[data-foto-fichero]', raiz).click(); });
+on(raiz, 'click', '[data-foto-quitar]', () => reiniciarFoto($('[data-alta]', raiz)));
+raiz.addEventListener('change', (e) => {
+  if (!e.target.matches('[data-foto-fichero]')) return;
+  const archivo = e.target.files[0];
+  e.target.value = ''; // permite volver a elegir el mismo fichero
+  if (archivo) procesarFoto($('[data-alta]', raiz), archivo);
+});
 on(raiz, 'click', '[data-paso]', (e, boton) => {
   const campo = $('input[name=cantidad]', raiz);
   campo.value = Math.min(9999, Math.max(1, (Number(campo.value) || 1) + Number(boton.dataset.paso)));

@@ -3,10 +3,17 @@ import { reglas, validar } from '../lib/validar.js';
 import { ErrorApi, noEncontrado, datosNoValidos } from '../lib/errores.js';
 import { ahora, normalizar } from '../lib/texto.js';
 import { resolverCategoria } from './catalogo.js';
+import { esIdFoto, comprobarAsociable } from './fotos.js';
 
 export const ESTADOS_ACTIVOS = ESTADOS.filter((e) => e !== 'baja');
 
 const { texto, entero, decimal, fecha, enumerado } = reglas;
+
+// Identificador de una foto ya subida (vacío = sin foto).
+export const reglaFoto = () => (v) => {
+  if (v === undefined || v === null || v === '') return { valor: null };
+  return esIdFoto(v) ? { valor: v } : { error: 'Foto no válida' };
+};
 
 export const ESQUEMA_ARTICULO = {
   nombre: texto({ requerido: true, max: 200 }),
@@ -16,6 +23,7 @@ export const ESQUEMA_ARTICULO = {
   categoria_id: entero({ min: 1 }),
   // Por nombre: si no existe se crea y queda guardada. Manda sobre categoria_id.
   categoria: texto({ max: 80 }),
+  foto_id: reglaFoto(),
   cantidad: entero({ min: 0, max: 1_000_000 }),
   estado: enumerado(ESTADOS_ACTIVOS),
   ubicacion_detalle: texto({ max: 200 }),
@@ -193,6 +201,7 @@ export function crear(db, entrada, usuario, { detalleAlta = {} } = {}) {
   return transaccion(db, () => {
     if (categoria) datos.categoria_id = resolverCategoria(db, categoria);
     comprobarReferencias(db, datos);
+    if (datos.foto_id) comprobarAsociable(db, datos.foto_id);
     const id = insertar(db, datos, usuario);
     const art = obtener(db, id);
     registrar(db, art, 'alta', { espacio: refEspacio(db, art.espacio_id), cantidad: art.cantidad, ...detalleAlta }, usuario);
@@ -213,6 +222,7 @@ export function actualizar(db, id, entrada, usuario) {
       throw new ErrorApi(409, 'El artículo está dado de baja: reactívalo para cambiar su estado');
     }
     comprobarReferencias(db, datos);
+    if (datos.foto_id) comprobarAsociable(db, datos.foto_id, id);
 
     const cambios = Object.fromEntries(
       Object.entries(datos).filter(([campo, valor]) => CAMPOS_EDITABLES.includes(campo) && antes[campo] !== valor),
@@ -239,6 +249,12 @@ export function actualizar(db, id, entrada, usuario) {
       if (campo === 'espacio_id' || campo === 'estado') continue;
       if (campo === 'familia_id') resto.familia = { antes: antes.familia_nombre, despues: despues.familia_nombre };
       else if (campo === 'categoria_id') resto.categoria = { antes: antes.categoria_nombre, despues: despues.categoria_nombre };
+      else if (campo === 'foto_id') {
+        resto.foto = {
+          antes: antes.foto_id ? 'con foto' : 'sin foto',
+          despues: !despues.foto_id ? 'sin foto' : (antes.foto_id ? 'foto nueva' : 'con foto'),
+        };
+      }
       else resto[campo] = { antes: antes[campo], despues: despues[campo] };
     }
     if (Object.keys(resto).length) registrar(db, despues, 'edicion', { cambios: resto }, usuario);

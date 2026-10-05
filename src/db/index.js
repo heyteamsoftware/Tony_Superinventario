@@ -155,6 +155,25 @@ const MIGRACIONES = [
       DELETE FROM categorias WHERE id NOT IN (SELECT categoria_id FROM articulos WHERE categoria_id IS NOT NULL);
     `);
   },
+
+  // Fotos de los artículos. Los ficheros viven en disco (no en SQLite, para
+  // que las copias de la base de datos no engorden); aquí solo su registro.
+  function fotosDeArticulos(db) {
+    db.exec(`
+      CREATE TABLE fotos (
+        id                 TEXT PRIMARY KEY,           -- 32 hex aleatorios; es el nombre del fichero
+        bytes              INTEGER NOT NULL,
+        bytes_miniatura    INTEGER NOT NULL,
+        ancho              INTEGER NOT NULL,
+        alto               INTEGER NOT NULL,
+        origen             TEXT NOT NULL,              -- 'app' o 'qr:CODIGO_FAMILIA'
+        usuario            TEXT NOT NULL DEFAULT '',
+        creada_en          TEXT NOT NULL
+      );
+      ALTER TABLE articulos ADD COLUMN foto_id TEXT REFERENCES fotos(id) ON DELETE SET NULL;
+      CREATE INDEX idx_articulos_foto ON articulos(foto_id) WHERE foto_id IS NOT NULL;
+    `);
+  },
 ];
 
 // `version` permite abrir una base de datos en una versión anterior del

@@ -7,6 +7,7 @@ import {
 } from '../ui.js';
 import { formularioArticulo, abrirFicha } from '../componentes/articulo.js';
 import { dialogoRevision, dialogoEspacio } from '../componentes/revision.js';
+import { urlFoto } from '../componentes/foto-campo.js';
 
 // ── Colores de los modos del plano ─────────────────────────────────────────
 const COLOR_REVISION = { al_dia: '#b7ecd0', pronto: '#ffdf9e', vencida: '#ffb8c3', nunca: '#e1e4ee' };
@@ -334,7 +335,7 @@ export function montar(raiz, { query }) {
             ${visibles.map((a) => html`
               <button type="button" class="item-articulo" data-articulo="${a.id}" style="--c:${a.familia_color}">
                 <span class="barra"></span>
-                <span style="min-width:0"><span class="nom" style="display:block">${a.nombre}</span>
+                <span style="min-width:0"><span class="nom" style="display:flex;align-items:center;gap:8px">${a.foto_id ? html`<img class="mini-foto" src="${urlFoto(a.foto_id, true)}" alt="" loading="lazy">` : ''}<span class="txt">${a.nombre}</span></span>
                   <span class="det"><span class="mono">${a.codigo}</span>${a.estado !== 'bueno' ? estadoBadge(a.estado) : ''}
                     ${a.ubicacion_detalle ? html`<span>· ${a.ubicacion_detalle}</span>` : ''}</span></span>
                 <span class="cant">${numero(a.cantidad)}<small>uds.</small></span>

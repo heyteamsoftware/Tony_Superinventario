@@ -52,6 +52,13 @@ export function montar(raiz) {
         </section>
 
         <section class="tarjeta tarjeta-cuerpo">
+          <h2 style="margin-bottom:6px">Fotos</h2>
+          <p class="tenue" style="margin-bottom:12px">Cada foto se reduce a un máximo de 1280 px y unos 300 KB (normalmente ~100 KB) y se le quitan los datos de ubicación. Se guardan en la carpeta <span class="mono">fotos</span> del servidor, junto a la base de datos.</p>
+          <div data-fotos-uso><div class="cargando" style="padding:12px"></div></div>
+          <p class="tenue pequeno" style="margin-top:12px">⚠ La «copia de seguridad» descargable incluye solo la base de datos. Las fotos se copian a diario en el servidor (carpeta <span class="mono">copias/fotos</span>).</p>
+        </section>
+
+        <section class="tarjeta tarjeta-cuerpo">
           <h2 style="margin-bottom:6px">Avisos de revisión</h2>
           <p class="tenue" style="margin-bottom:14px">Cuántos días puede pasar una familia sin repasar su inventario antes de mostrar el aviso.</p>
           <form data-ajustes class="formulario" style="grid-template-columns:1fr 1fr">
@@ -177,6 +184,31 @@ export function montar(raiz) {
   });
   on(raiz, 'click', '[data-editar-espacio]', (e, b) => dialogoEspacio(espacio(b.dataset.editarEspacio)).catch(avisoError));
 
+  // 512 KB, 14,3 MB, 2,4 GB…
+  const tamano = (b) => {
+    if (b < 1024 * 1024) return `${Math.max(b ? 1 : 0, Math.round(b / 1024))} KB`;
+    if (b < 1024 ** 3) return `${(b / 1048576).toFixed(b < 100 * 1048576 ? 1 : 0)} MB`;
+    return `${(b / 1024 ** 3).toFixed(1)} GB`;
+  };
+
+  async function pintarFotos() {
+    try {
+      const u = await api.get('/fotos/uso');
+      const porcentaje = Math.min(100, (u.bytes / u.max) * 100);
+      pintar($('[data-fotos-uso]', raiz), html`
+        <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px">
+          <span><b style="font-size:22px">${numero(u.fotos)}</b> <span class="tenue">${u.fotos === 1 ? 'foto' : 'fotos'}</span></span>
+          <span><b>${tamano(u.bytes)}</b> <span class="tenue">de ${tamano(u.max)}</span></span>
+        </div>
+        <div class="barra-uso" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.round(porcentaje)}"
+             title="${porcentaje.toFixed(1)} % del espacio reservado para fotos"><span style="width:${Math.max(porcentaje, u.fotos ? 1.5 : 0)}%" class="${porcentaje > 85 ? 'alta' : ''}"></span></div>
+        ${u.fotos ? html`<p class="tenue pequeno" style="margin-top:8px">Media: ${tamano(u.bytes / u.fotos)} por foto (con su miniatura).</p>` : ''}`);
+    } catch {
+      pintar($('[data-fotos-uso]', raiz), html`<p class="tenue">No se pudo consultar el espacio de fotos.</p>`);
+    }
+  }
+
   pintarCatalogos();
-  return alCambiarInventario(pintarCatalogos);
+  pintarFotos();
+  return alCambiarInventario(() => { pintarCatalogos(); pintarFotos(); });
 }

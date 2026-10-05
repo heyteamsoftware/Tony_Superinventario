@@ -24,7 +24,21 @@ async function pedir(metodo, ruta, cuerpo) {
   return datos;
 }
 
+// Sube un fichero binario (una foto) como cuerpo de la petición.
+async function subir(ruta, blob) {
+  const res = await fetch(`api${ruta}`, {
+    method: 'POST',
+    headers: { 'X-Usuario': encodeURIComponent(usuarioActual() ?? ''), 'Content-Type': blob.type || 'application/octet-stream' },
+    body: blob,
+  });
+  let datos = null;
+  try { datos = await res.json(); } catch { /* respuesta vacía */ }
+  if (!res.ok) throw new ErrorApi(res.status, datos);
+  return datos;
+}
+
 export const api = {
+  subir,
   get: (ruta) => pedir('GET', ruta),
   post: (ruta, cuerpo = {}) => pedir('POST', ruta, cuerpo),
   patch: (ruta, cuerpo) => pedir('PATCH', ruta, cuerpo),

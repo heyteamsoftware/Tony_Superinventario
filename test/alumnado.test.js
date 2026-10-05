@@ -75,7 +75,7 @@ describe('migración: categorías predefinidas', () => {
       const quedan = actual.prepare('SELECT nombre FROM categorias').all().map((c) => c.nombre);
       assert.deepEqual(quedan, ['Mobiliario']);
       assert.equal(actual.prepare('SELECT categoria_id FROM articulos').get().categoria_id, mobiliario);
-      assert.equal(actual.prepare('PRAGMA user_version').get().user_version, 2);
+      assert.equal(actual.prepare('PRAGMA user_version').get().user_version, 3);
       actual.close();
     } finally {
       rmSync(dir, { recursive: true, force: true });

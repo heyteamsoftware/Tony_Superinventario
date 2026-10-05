@@ -20,6 +20,7 @@ No usa contraseñas: al entrar se pide el nombre, que queda en el historial de c
   - Si una familia pasa **más de 365 días** sin repasar su inventario aparece un aviso en el plano, en el menú y en su ficha (el plazo y el preaviso se configuran en *Datos*).
 - **Tabla de inventario** con búsqueda sin tildes, filtros, orden, paginación y acciones en lote (trasladar, cambiar estado, imprimir etiquetas).
 - **QR del alumnado**: cada familia puede tener un QR (botón «📱 QR» en *Familias*, o «Carteles QR de todas»). Al escanearlo, el alumnado abre una pantalla pensada para móvil (`/alumno/`) donde **solo puede añadir material de esa familia**: elige el aula, escribe qué es, cuántos hay y en qué estado está. No puede ver, editar, mover ni borrar nada. Cada alta queda en el historial con su nombre y la marca «(QR)». El QR se puede imprimir como cartel, regenerar (el anterior deja de funcionar al instante) o desactivar.
+- **Fotos del material**: se puede añadir una foto al dar de alta o editar un artículo, tanto en la app como desde el QR del alumnado (con la cámara o la galería del móvil). Se ven en la ficha, en la lista del aula y en la tabla del inventario. **Pesan poco por diseño**: el móvil la reduce antes de subirla y el servidor la vuelve a procesar (máx. 1280 px, WebP, ≤ 300 KB; normalmente ~100 KB; una foto de cámara de 5-10 MB acaba en ~100-200 KB) y le quita los datos de ubicación. Hay un contador de espacio en *Datos*.
 - **Categorías libres**: no hay lista cerrada. Se escribe la categoría al añadir material; si no existe se crea y queda guardada para elegirla después (sin distinguir mayúsculas ni tildes). En *Datos* se pueden renombrar o quitar.
 - **Inventario de una familia en PDF**, ordenado por planta y aula (y por nombre dentro de cada aula), con subtotales, estado de revisión, casilla por artículo para la revisión física y bloque de firma. Opcionalmente con valor económico y bajas. Desde *Familias*, *Inventario* o *Datos*.
 - **Importación desde Excel (CSV)** con comprobación previa: o entran todas las filas o ninguna, con un informe de errores por fila. La **exportación** abre directamente en Excel y se puede volver a importar.
@@ -49,6 +50,8 @@ Variables opcionales:
 | `PORT`    | `3000`                 | Puerto HTTP                       |
 | `HOST`    | `0.0.0.0`              | Interfaz de red                   |
 | `DB_PATH` | `data/inventario.db`   | Fichero de la base de datos       |
+| `FOTOS_DIR` | `<carpeta de la BD>/fotos` | Carpeta de las fotos          |
+| `FOTOS_MAX_MB` | `3000`            | Espacio máximo para fotos (MB); al llegar se rechazan las nuevas |
 
 ### Datos de ejemplo
 
@@ -70,7 +73,8 @@ Publicada en **https://myappsserver.duckdns.org/Tony_Superinventario/**, junto a
 | Servicio | `tony-superinventario` (systemd, `deploy/tony-superinventario.service`), escucha solo en `127.0.0.1:3100` |
 | Apache | proxy inverso de `/Tony_Superinventario/` (`deploy/apache-superinventario.conf`) |
 | Node.js | binario oficial (v24) en `/opt/node/actual`, enlazado en `/usr/local/bin/node` |
-| Copia diaria | 03:30, se guardan 30 (`deploy/cron-copias` → `/etc/cron.d/tony-superinventario`) |
+| Fotos | `/var/lib/tony-superinventario/fotos/` (ficheros WebP; la base de datos solo guarda su registro) |
+| Copia diaria | 03:30: la base de datos (se guardan 30) y las fotos nuevas (`copias/fotos/`) (`deploy/cron-copias` → `/etc/cron.d/tony-superinventario`) |
 
 Actualizar a la última versión de GitHub (hace copia de seguridad antes de reiniciar):
 
@@ -110,8 +114,9 @@ scripts/demo.js          genera una base de datos de ejemplo
 
 Decisiones técnicas:
 
-- **Sin compilación ni dependencias nativas**: Express, `qrcode`, `pdfkit` y el SQLite integrado de Node. Se instala en cualquier PC del centro con `npm install`.
+- **Sin compilación**: Express, `qrcode`, `pdfkit`, `sharp` (procesado de fotos; trae binarios precompilados, no hace falta compilar nada) y el SQLite integrado de Node. Se instala en cualquier PC del centro con `npm install`.
 - **Integridad**: claves foráneas, restricciones `CHECK`, transacciones en todas las operaciones compuestas y un historial de movimientos que no se modifica. Los códigos de inventario (`SAN-00012`) no cambian ni se reutilizan.
+- **Fotos**: solo se admiten JPG, PNG, WebP, GIF y AVIF (nunca SVG); se limita el tamaño de subida (8 MB) y los píxeles (50 MP, contra «bombas de descompresión»); el nombre del fichero es un identificador aleatorio validado (sin rutas); una foto solo puede estar en un artículo y con el QR solo se pueden usar fotos subidas con el QR de esa familia. Las fotos sin artículo se borran solas pasada una hora.
 - **Acceso del alumnado**: el token de cada familia es aleatorio (144 bits) y solo se entrega a la gestión; la familia del alta sale siempre del token (se ignora cualquier otro dato que mande el cliente), hay un tope de altas por token y las peticiones tienen tamaño limitado. Todo vive bajo `/alumno/` y `/api/alumno/`, de modo que si se protege el resto de la aplicación con contraseña, esas dos rutas se pueden dejar abiertas.
 - **Seguridad** (aunque sea una app interna): todo el HTML se genera escapando los datos, consultas parametrizadas, `Content-Security-Policy` estricta y protección contra fórmulas en los CSV exportados.
 - **Plano**: la geometría de cada espacio está en `src/db/semilla.js`. Los nombres, grupos y familias habituales de cada aula se editan desde la aplicación (*Datos → Espacios del plano*).
