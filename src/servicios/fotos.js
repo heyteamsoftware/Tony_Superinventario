@@ -100,7 +100,7 @@ export async function guardarFoto(db, dir, buffer, { origen, usuario = '' }) {
 
   const uso = usoFotos(db);
   if (uso.bytes + principal.length + miniatura.length > uso.max) {
-    throw new ErrorApi(507, 'Se ha alcanzado el límite de espacio para fotos. Avisa al profesorado.');
+    throw new ErrorApi(507, 'Se ha alcanzado el límite de espacio para fotos. Avisa a quien coordine el inventario.');
   }
 
   const id = randomBytes(16).toString('hex');

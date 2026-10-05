@@ -11,9 +11,9 @@ import * as estadisticas from './servicios/estadisticas.js';
 import * as datos from './servicios/datos.js';
 import * as revisiones from './servicios/revisiones.js';
 import * as informes from './servicios/informes.js';
-import * as alumnado from './servicios/alumnado.js';
+import * as movil from './servicios/movil.js';
 import * as fotos from './servicios/fotos.js';
-import { crearApiAlumno } from './api-alumno.js';
+import { crearApiMovil } from './api-movil.js';
 
 // Sin contraseñas: cada petición lleva el nombre de quien la hace en la
 // cabecera X-Usuario (codificada con encodeURIComponent) para el historial.
@@ -48,8 +48,11 @@ export function crearApi(db, { dirFotos = null } = {}) {
   const barrerFotos = () => {
     try { fotos.purgarHuerfanas(db, dirFotos); } catch (err) { console.error('No se pudieron limpiar fotos:', err.message); }
   };
-  // Acceso del alumnado por QR: va antes que nada, con su propio límite de tamaño.
-  api.use('/alumno', crearApiAlumno(db, { dirFotos }));
+  // QR de inventario móvil: va antes que nada, con su propio límite de tamaño.
+  // /alumno es el nombre antiguo: los QR ya impresos siguen funcionando.
+  const apiMovil = crearApiMovil(db, { dirFotos });
+  api.use('/movil', apiMovil);
+  api.use('/alumno', apiMovil);
   api.use(json({ limit: '10mb' }));
 
   // ── Catálogo ───────────────────────────────────────────────────────────
@@ -68,12 +71,12 @@ export function crearApi(db, { dirFotos = null } = {}) {
   api.get('/familias', (req, res) => res.json(revisiones.familiasConRevision(db)));
   api.get('/familias/:id/espacios', (req, res) => res.json(revisiones.espaciosDeFamilia(db, id(req))));
 
-  // QR del alumnado: el token solo se entrega por aquí (no va en /meta).
+  // QR de inventario móvil: el token solo se entrega por aquí (no va en /meta).
   // Generar uno nuevo invalida el anterior; borrarlo desactiva el acceso.
-  api.get('/familias/:id/acceso', (req, res) => res.json(alumnado.estadoAcceso(db, id(req))));
-  api.post('/familias/:id/acceso', (req, res) => res.status(201).json(alumnado.generarAcceso(db, id(req))));
+  api.get('/familias/:id/acceso', (req, res) => res.json(movil.estadoAcceso(db, id(req))));
+  api.post('/familias/:id/acceso', (req, res) => res.status(201).json(movil.generarAcceso(db, id(req))));
   api.delete('/familias/:id/acceso', (req, res) => {
-    alumnado.revocarAcceso(db, id(req));
+    movil.revocarAcceso(db, id(req));
     res.status(204).end();
   });
   // Informe PDF del inventario de una familia, ordenado por aula. Se abre con

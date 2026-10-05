@@ -13,7 +13,7 @@ const VISTAS = {
   historial: () => import('./vistas/historial.js'),
   datos: () => import('./vistas/datos.js'),
   etiquetas: () => import('./vistas/etiquetas.js'),
-  'qr-alumnado': () => import('./vistas/qr-alumnado.js'),
+  'qr-movil': () => import('./vistas/qr-movil.js'),
 };
 
 const vista = $('#vista');

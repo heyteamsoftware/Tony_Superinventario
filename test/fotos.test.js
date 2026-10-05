@@ -276,18 +276,18 @@ describe('espacio ocupado', () => {
   });
 });
 
-describe('fotos desde el QR del alumnado', () => {
+describe('fotos desde el QR de inventario móvil', () => {
   let token;
   let tokenOtra;
   before(async () => {
     token = (await app.post(`/api/familias/${app.familia('SAN')}/acceso`)).body.token;
     tokenOtra = (await app.post(`/api/familias/${app.familia('IMA')}/acceso`)).body.token;
   });
-  const alta = (t, extra) => app.post(`/api/alumno/${t}/articulos`, { alumno: 'Lucía', nombre: 'Lupa', espacio_id: app.espacio('P1-04'), ...extra });
+  const alta = (t, extra) => app.post(`/api/movil/${t}/articulos`, { persona: 'Lucía', nombre: 'Lupa', espacio_id: app.espacio('P1-04'), ...extra });
 
   test('sube una foto con el token y la usa en el alta', async () => {
     const original = await fotoGrande(2400, 1800);
-    const f = await app.subir(`/api/alumno/${token}/fotos`, original);
+    const f = await app.subir(`/api/movil/${token}/fotos`, original);
     assert.equal(f.status, 201);
     assert.ok(f.body.bytes <= LIMITES.bytesMax);
     assert.equal(app.db.prepare('SELECT origen FROM fotos WHERE id = ?').get(f.body.id).origen, 'qr:SAN');
@@ -298,7 +298,7 @@ describe('fotos desde el QR del alumnado', () => {
   });
 
   test('no puede usar una foto subida con el QR de otra familia, ni una de la app', async () => {
-    const deOtra = (await app.subir(`/api/alumno/${tokenOtra}/fotos`, await fotoSencilla())).body;
+    const deOtra = (await app.subir(`/api/movil/${tokenOtra}/fotos`, await fotoSencilla())).body;
     const r = await alta(token, { foto_id: deOtra.id });
     assert.equal(r.status, 400);
     assert.ok(r.body.detalles.foto_id);
@@ -309,20 +309,20 @@ describe('fotos desde el QR del alumnado', () => {
   });
 
   test('misma validación que en la app: formato, tamaño y token', async () => {
-    assert.equal((await app.subir(`/api/alumno/${token}/fotos`, Buffer.from('no soy una foto'))).status, 400);
-    assert.equal((await app.subir(`/api/alumno/${token}/fotos`, Buffer.alloc(LIMITES.subidaMax + 1024, 1))).status, 413);
-    assert.equal((await app.subir(`/api/alumno/${'x'.repeat(24)}/fotos`, await fotoSencilla())).status, 404);
+    assert.equal((await app.subir(`/api/movil/${token}/fotos`, Buffer.from('no soy una foto'))).status, 400);
+    assert.equal((await app.subir(`/api/movil/${token}/fotos`, Buffer.alloc(LIMITES.subidaMax + 1024, 1))).status, 413);
+    assert.equal((await app.subir(`/api/movil/${'x'.repeat(24)}/fotos`, await fotoSencilla())).status, 404);
   });
 
   test('el tope de subidas por token devuelve 429', async () => {
-    const { limites } = await import('../src/servicios/alumnado.js');
+    const { limites } = await import('../src/servicios/movil.js');
     const original = limites.fotos.intentar;
     let n = 0;
     limites.fotos.intentar = (clave) => (clave === token ? ++n <= 1 : original(clave));
     try {
       const imagen = await fotoSencilla(100, 100);
-      assert.equal((await app.subir(`/api/alumno/${token}/fotos`, imagen)).status, 201);
-      const r = await app.subir(`/api/alumno/${token}/fotos`, imagen);
+      assert.equal((await app.subir(`/api/movil/${token}/fotos`, imagen)).status, 201);
+      const r = await app.subir(`/api/movil/${token}/fotos`, imagen);
       assert.equal(r.status, 429);
     } finally {
       limites.fotos.intentar = original;
@@ -332,7 +332,7 @@ describe('fotos desde el QR del alumnado', () => {
   test('con un token revocado ya no se puede subir nada', async () => {
     const efimero = (await app.post(`/api/familias/${app.familia('COM')}/acceso`)).body.token;
     await app.del(`/api/familias/${app.familia('COM')}/acceso`);
-    assert.equal((await app.subir(`/api/alumno/${efimero}/fotos`, await fotoSencilla())).status, 404);
+    assert.equal((await app.subir(`/api/movil/${efimero}/fotos`, await fotoSencilla())).status, 404);
   });
 });
 

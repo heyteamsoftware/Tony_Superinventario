@@ -226,7 +226,7 @@ export function describirMovimiento(m) {
   switch (m.tipo) {
     case 'alta':
       return {
-        ico: '＋', titulo: d.origen_codigo ? 'Alta por traslado parcial' : (d.importado ? 'Alta por importación' : (d.via === 'qr' ? 'Alta desde el QR del alumnado' : 'Alta en el inventario')),
+        ico: '＋', titulo: d.origen_codigo ? 'Alta por traslado parcial' : (d.importado ? 'Alta por importación' : (d.via === 'qr' ? 'Alta desde el QR de inventario móvil' : 'Alta en el inventario')),
         detalle: d.origen_codigo
           ? html`${d.cantidad} uds. separadas de <b>${d.origen_codigo}</b> y llevadas a ${lugarTexto(d.espacio)}`
           : html`${d.cantidad} ${d.cantidad === 1 ? 'unidad' : 'unidades'} en ${lugarTexto(d.espacio)}`,

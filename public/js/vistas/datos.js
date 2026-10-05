@@ -72,7 +72,7 @@ export function montar(raiz) {
 
         <section class="tarjeta tarjeta-cuerpo">
           <div class="titulo-bloque"><h2>Categorías</h2><button type="button" class="boton pequeno" data-accion="nueva-categoria">＋ Nueva</button></div>
-          <p class="tenue pequeno" style="margin-bottom:10px">No hay lista cerrada: se crean al escribirlas al añadir material (también desde el QR del alumnado), quedan guardadas y se pueden elegir después. Aquí puedes renombrarlas o quitar las que sobren.</p>
+          <p class="tenue pequeno" style="margin-bottom:10px">No hay lista cerrada: se crean al escribirlas al añadir material (también desde el QR de inventario móvil), quedan guardadas y se pueden elegir después. Aquí puedes renombrarlas o quitar las que sobren.</p>
           <div class="lista-simple" data-categorias></div>
         </section>
 

@@ -2,17 +2,17 @@ import { html, pintar, $, $$, on, aviso } from '../js/ui.js';
 import { iniciales } from '../js/usuario.js';
 import { comprimirFoto, kb } from '../js/foto.js';
 
-// Interfaz móvil del alumnado. El QR de cada familia trae un código secreto
+// Inventario móvil. El QR de cada familia trae un código secreto
 // (?t=...) que solo permite VER el formulario de alta y AÑADIR material de esa
 // familia: no hay forma de consultar, editar ni borrar el inventario desde aquí.
 
 const token = new URLSearchParams(location.search).get('t') ?? '';
 const raiz = document.getElementById('app');
 
-const clavePersona = 'superinventario.alumno.nombre';
+const clavePersona = 'superinventario.movil.nombre';
 const sufijo = token.slice(0, 10);
-const claveLista = `superinventario.alumno.lista.${sufijo}`;
-const claveUltimo = `superinventario.alumno.ultimo.${sufijo}`;
+const claveLista = `superinventario.movil.lista.${sufijo}`;
+const claveUltimo = `superinventario.movil.ultimo.${sufijo}`;
 
 const leer = (clave, defecto) => {
   try { const v = localStorage.getItem(clave); return v === null ? defecto : JSON.parse(v); } catch { return defecto; }
@@ -32,7 +32,7 @@ let ultimo = leer(claveUltimo, {});
 async function llamar(ruta, cuerpo) {
   let res;
   try {
-    const url = new URL(`../api/alumno/${encodeURIComponent(token)}${ruta}`, location.href);
+    const url = new URL(`../api/movil/${encodeURIComponent(token)}${ruta}`, location.href);
     res = await fetch(url, cuerpo === undefined ? undefined : {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(cuerpo),
     });
@@ -50,7 +50,7 @@ async function llamar(ruta, cuerpo) {
 async function subirFoto(blob) {
   let res;
   try {
-    res = await fetch(new URL(`../api/alumno/${encodeURIComponent(token)}/fotos`, location.href), {
+    res = await fetch(new URL(`../api/movil/${encodeURIComponent(token)}/fotos`, location.href), {
       method: 'POST', headers: { 'Content-Type': blob.type || 'application/octet-stream' }, body: blob,
     });
   } catch {
@@ -77,7 +77,7 @@ const cabecera = () => html`
 const bandaFamilia = () => html`
   <div class="al-familia" style="--c:${datos.familia.color}">
     <span class="sigla">${datos.familia.codigo}</span>
-    <div><small>Estás añadiendo material de</small><h1>${datos.familia.nombre}</h1></div>
+    <div><small>Inventario móvil · añadiendo material de</small><h1>${datos.familia.nombre}</h1></div>
   </div>`;
 
 function pantallaGrande(icono, titulo, texto) {
@@ -112,7 +112,7 @@ function pantallaNombre() {
   pintar(raiz, html`${cabecera()}${bandaFamilia()}
     <form class="al-centro" data-nombre novalidate>
       <h1>¡Hola! ¿Cómo te llamas?</h1>
-      <p>Tu nombre quedará anotado junto al material que añadas, para que tu profesorado sepa quién lo ha registrado.</p>
+      <p>Tu nombre quedará anotado junto al material que añadas, para que se sepa quién lo ha registrado.</p>
       <label class="campo"><span class="obligatorio">Nombre y apellido</span>
         <input name="nombre" value="${nombre}" autocomplete="name" maxlength="60" placeholder="Ej.: Lucía Pérez"></label>
       <button type="submit" class="boton primario" style="height:54px;font-size:17px;border-radius:14px">${nombre ? 'Guardar' : 'Empezar'}</button>
@@ -174,7 +174,7 @@ function pantallaFormulario() {
         </div></details>
 
       <div data-lista>${listaHtml()}</div>
-      <p class="al-aviso-final">Desde aquí solo puedes añadir material. Si te equivocas o hay que corregir algo, avisa a tu profesorado.</p>
+      <p class="al-aviso-final">Desde aquí solo puedes añadir material. Si te equivocas o hay que corregir algo, avisa a quien coordine el inventario.</p>
 
       <div class="al-barra"><button type="submit" class="boton primario" data-guardar>Guardar material</button></div>
     </form>`);
@@ -216,7 +216,7 @@ async function guardarAlta(form) {
   limpiarErrores(form);
   const f = form.elements;
   const cuerpo = {
-    alumno: nombre,
+    persona: nombre,
     espacio_id: Number(f.espacio_id.value) || null,
     nombre: f.nombre.value,
     cantidad: f.cantidad.value === '' ? null : Number(f.cantidad.value),
@@ -358,7 +358,7 @@ raiz.addEventListener('change', (e) => {
 // ── Arranque ───────────────────────────────────────────────────────────────
 (async function iniciar() {
   if (!token) {
-    pantallaGrande('📷', 'Falta el código de acceso', 'Escanea de nuevo el QR que te ha dado tu profesorado.');
+    pantallaGrande('📷', 'Falta el código de acceso', 'Escanea de nuevo el QR del inventario.');
     return;
   }
   try {
@@ -367,6 +367,6 @@ raiz.addEventListener('change', (e) => {
     pantallaGrande(err.status === 404 ? '🔒' : '📡', err.status === 404 ? 'Este QR ya no es válido' : 'No se puede cargar', err.message);
     return;
   }
-  document.title = `Añadir material · ${datos.familia.nombre}`;
+  document.title = `Inventario móvil · ${datos.familia.nombre}`;
   if (nombre) pantallaFormulario(); else pantallaNombre();
 })();

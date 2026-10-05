@@ -143,9 +143,9 @@ const MIGRACIONES = [
     }
   },
 
-  // Acceso del alumnado por QR (un token secreto por familia) y fin de las
+  // Acceso por QR de inventario móvil (un token secreto por familia) y fin de las
   // categorías predefinidas: ahora se crean al escribirlas y quedan guardadas.
-  function accesoAlumnadoYCategoriasLibres(db) {
+  function accesoQrYCategoriasLibres(db) {
     db.exec(`
       ALTER TABLE familias ADD COLUMN acceso_token TEXT;
       CREATE UNIQUE INDEX idx_familias_acceso_token ON familias(acceso_token) WHERE acceso_token IS NOT NULL;

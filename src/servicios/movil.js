@@ -5,7 +5,7 @@ import { crearLimitador } from '../lib/limitador.js';
 import { crear, ESTADOS_ACTIVOS, reglaFoto } from './articulos.js';
 import { listarCategorias } from './catalogo.js';
 
-// Acceso del alumnado por QR: cada familia tiene un token secreto. Con él solo
+// QR de inventario móvil: cada familia tiene un token secreto. Con él solo
 // se puede ver el formulario de alta (aulas y categorías) y AÑADIR material de
 // esa familia. No hay lectura, edición, traslado ni borrado del inventario.
 
@@ -17,14 +17,14 @@ const FORMATO_TOKEN = /^[A-Za-z0-9_-]{20,64}$/;
 // el inventario hasta que alguien lo revoque. Se cuenta por token y no por IP
 // porque todo el centro sale por la misma IP. No hay límite de intentos con
 // tokens erróneos a propósito: con 144 bits adivinar uno es inviable y un
-// bloqueo por IP dejaría sin acceso a toda la clase si un alumno trasteara.
+// bloqueo por IP dejaría sin acceso a todo el centro si alguien trasteara.
 export const limites = {
   altas: crearLimitador({ ventanaMs: 10 * 60_000, max: 200 }),
   fotos: crearLimitador({ ventanaMs: 10 * 60_000, max: 200 }),
 };
 setInterval(() => { limites.altas.limpiar(); limites.fotos.limpiar(); }, 10 * 60_000).unref();
 
-// ── Gestión del token (lado profesorado) ─────────────────────────────────
+// ── Gestión del token (desde la aplicación) ─────────────────────────────────
 
 function familiaExiste(db, id) {
   const f = db.prepare('SELECT id, codigo, nombre, color, acceso_token FROM familias WHERE id = ?').get(id);
@@ -50,7 +50,7 @@ export function revocarAcceso(db, familiaId) {
   db.prepare('UPDATE familias SET acceso_token = NULL WHERE id = ?').run(familiaId);
 }
 
-// ── Lado alumnado ────────────────────────────────────────────────────────
+// ── Lado móvil (con el token) ────────────────────────────────────────────────────────
 
 export function familiaPorToken(db, token) {
   if (typeof token !== 'string' || !FORMATO_TOKEN.test(token)) return null;
@@ -74,7 +74,7 @@ export function datosFormulario(db, familia) {
 }
 
 const ESQUEMA_ALTA = {
-  alumno: texto({ requerido: true, max: 60 }),
+  persona: texto({ requerido: true, max: 60 }),
   nombre: texto({ requerido: true, max: 200 }),
   espacio_id: entero({ requerido: true, min: 1 }),
   cantidad: entero({ min: 1, max: 9999 }),
@@ -90,14 +90,15 @@ const ESQUEMA_ALTA = {
 
 // Alta de material. La familia sale SIEMPRE del token; se ignora cualquier
 // otro campo que venga en la petición (valor, proveedor, familia, etc.).
-export function altaAlumno(db, familia, entrada) {
-  const { alumno, ...datos } = validar(ESQUEMA_ALTA, entrada);
+export function altaMovil(db, familia, entrada) {
+  // Las páginas cargadas antes del cambio de nombre mandaban "alumno" en vez de "persona".
+  const { persona, ...datos } = validar(ESQUEMA_ALTA, { ...entrada, persona: entrada?.persona ?? entrada?.alumno });
   // Solo puede usar una foto que se subió con el QR de esta misma familia.
   if (datos.foto_id) {
     const foto = db.prepare('SELECT origen FROM fotos WHERE id = ?').get(datos.foto_id);
     if (foto?.origen !== `qr:${familia.codigo}`) throw datosNoValidos({ foto_id: 'La foto no es válida. Súbela de nuevo.' });
   }
-  const art = crear(db, { ...datos, familia_id: familia.id }, `${alumno} (QR)`, { detalleAlta: { via: 'qr' } });
+  const art = crear(db, { ...datos, familia_id: familia.id }, `${persona} (QR)`, { detalleAlta: { via: 'qr' } });
   return {
     id: art.id,
     codigo: art.codigo,

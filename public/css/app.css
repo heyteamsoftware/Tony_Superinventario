@@ -576,7 +576,7 @@ dialog.modal::backdrop { background: rgba(14, 17, 33, .5); backdrop-filter: blur
   .etiqueta { border-color: #999; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }
 
-/* ── QR del alumnado: diálogo y cartel imprimible ───────────────────────── */
+/* ── QR de inventario móvil: diálogo y cartel imprimible ───────────────────────── */
 .qr-dialogo { display: flex; flex-direction: column; gap: 14px; align-items: stretch; }
 .qr-marco { align-self: center; padding: 14px; background: #fff; border: 1px solid var(--linea); border-radius: 14px; box-shadow: var(--sombra-1); line-height: 0; }
 .qr-marco img { width: 220px; height: 220px; display: block; }

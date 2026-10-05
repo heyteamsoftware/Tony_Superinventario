@@ -2,14 +2,14 @@ import { api, consulta } from '../api.js';
 import { notificarCambio } from '../cambios.js';
 import { html, pintar, crearModal, confirmar, aviso, avisoError, on } from '../ui.js';
 
-// Enlace que lleva el QR de una familia: la página móvil del alumnado con el
+// Enlace que lleva el QR de una familia: la página de inventario móvil con el
 // código secreto. Se calcula respecto a la página actual para que valga
 // también cuando la app está publicada en una subcarpeta del servidor.
-export function urlAlumnado(token) {
-  return new URL(`alumno/?t=${token}`, location.href.split('#')[0]).href;
+export function urlMovil(token) {
+  return new URL(`movil/?t=${token}`, location.href.split('#')[0]).href;
 }
 
-export const urlQr = (token) => `api/qr.svg${consulta({ texto: urlAlumnado(token) })}`;
+export const urlQr = (token) => `api/qr.svg${consulta({ texto: urlMovil(token) })}`;
 
 async function copiar(texto) {
   try {
@@ -21,7 +21,7 @@ async function copiar(texto) {
 }
 
 // Diálogo de gestión del QR de una familia.
-export async function dialogoAccesoAlumnado(familia) {
+export async function dialogoQrMovil(familia) {
   let acceso;
   try {
     acceso = await api.get(`/familias/${familia.id}/acceso`);
@@ -33,19 +33,19 @@ export async function dialogoAccesoAlumnado(familia) {
 
   function pintarDialogo() {
     pintar(d, html`
-      <div class="modal-cab"><h2>📱 QR del alumnado · ${familia.nombre}</h2>
+      <div class="modal-cab"><h2>📱 QR de inventario móvil · ${familia.nombre}</h2>
         <button type="button" class="boton fantasma icono" data-cerrar aria-label="Cerrar">✕</button></div>
       <div class="modal-cuerpo">
         ${acceso.activo ? html`
           <div class="qr-dialogo">
             <div class="qr-marco"><img src="${urlQr(acceso.token)}" alt="QR de acceso de ${familia.nombre}" width="220" height="220"></div>
-            <p class="tenue pequeno" style="text-align:center">Al escanearlo, el alumnado abre una pantalla de móvil donde <b>solo puede añadir material de ${familia.nombre}</b>:
+            <p class="tenue pequeno" style="text-align:center">Quien lo escanee abre una pantalla de móvil donde <b>solo puede añadir material de ${familia.nombre}</b>:
               no ve ni cambia el resto del inventario.</p>
             <label class="campo"><span>Enlace</span>
-              <input readonly value="${urlAlumnado(acceso.token)}" data-enlace></label>
+              <input readonly value="${urlMovil(acceso.token)}" data-enlace></label>
           </div>`
           : html`
-          <p>Genera un QR para esta familia. El alumnado lo escanea con el móvil y accede a un formulario sencillo en el que
+          <p>Genera el QR de inventario móvil de esta familia. Quien lo escanee con el móvil accede a un formulario sencillo en el que
             <b>solo puede añadir material</b> (elige el aula, escribe qué es, cuántos hay y en qué estado está).</p>
           <p class="tenue">No podrán ver, editar, mover ni borrar nada del inventario. Cada alta queda registrada con su nombre y la marca "(QR)".</p>`}
       </div>
@@ -95,11 +95,11 @@ export async function dialogoAccesoAlumnado(familia) {
           aviso('Acceso desactivado');
         }
       } else if (accion === 'copiar') {
-        if (await copiar(urlAlumnado(acceso.token))) aviso('Enlace copiado');
+        if (await copiar(urlMovil(acceso.token))) aviso('Enlace copiado');
         else { d.querySelector('[data-enlace]')?.select(); aviso('Selecciona el enlace y cópialo con Ctrl+C'); }
       } else if (accion === 'imprimir') {
         cerrar();
-        location.hash = `#/qr-alumnado?familia=${familia.id}`;
+        location.hash = `#/qr-movil?familia=${familia.id}`;
       }
     } catch (err) {
       avisoError(err);

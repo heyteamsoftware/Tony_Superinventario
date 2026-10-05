@@ -83,7 +83,7 @@ describe('migración: categorías predefinidas', () => {
   });
 });
 
-describe('QR del alumnado: gestión del token', () => {
+describe('QR de inventario móvil: gestión del token', () => {
   test('sin acceso hasta que se genera, y no aparece en /meta', async () => {
     const f = app.familia('SSC');
     assert.deepEqual((await app.get(`/api/familias/${f}/acceso`)).body, { familia_id: f, activo: false, token: null });
@@ -103,11 +103,11 @@ describe('QR del alumnado: gestión del token', () => {
     const t1 = (await app.post(`/api/familias/${f}/acceso`)).body.token;
     const t2 = (await app.post(`/api/familias/${f}/acceso`)).body.token;
     assert.notEqual(t1, t2);
-    assert.equal((await app.get(`/api/alumno/${t1}`)).status, 404);
-    assert.equal((await app.get(`/api/alumno/${t2}`)).status, 200);
+    assert.equal((await app.get(`/api/movil/${t1}`)).status, 404);
+    assert.equal((await app.get(`/api/movil/${t2}`)).status, 200);
 
     assert.equal((await app.del(`/api/familias/${f}/acceso`)).status, 204);
-    assert.equal((await app.get(`/api/alumno/${t2}`)).status, 404);
+    assert.equal((await app.get(`/api/movil/${t2}`)).status, 404);
     assert.equal((await app.get(`/api/familias/${f}/acceso`)).body.activo, false);
   });
 
@@ -115,8 +115,8 @@ describe('QR del alumnado: gestión del token', () => {
     const a = (await app.post(`/api/familias/${app.familia('HOT')}/acceso`)).body.token;
     const b = (await app.post(`/api/familias/${app.familia('INA')}/acceso`)).body.token;
     assert.notEqual(a, b);
-    assert.equal((await app.get(`/api/alumno/${a}`)).body.familia.codigo, 'HOT');
-    assert.equal((await app.get(`/api/alumno/${b}`)).body.familia.codigo, 'INA');
+    assert.equal((await app.get(`/api/movil/${a}`)).body.familia.codigo, 'HOT');
+    assert.equal((await app.get(`/api/movil/${b}`)).body.familia.codigo, 'INA');
   });
 
   test('familia inexistente', async () => {
@@ -126,7 +126,7 @@ describe('QR del alumnado: gestión del token', () => {
   });
 });
 
-describe('QR del alumnado: lo que puede hacer con el token', () => {
+describe('QR de inventario móvil: lo que puede hacer con el token', () => {
   let token;
   let familiaId;
   before(async () => {
@@ -135,7 +135,7 @@ describe('QR del alumnado: lo que puede hacer con el token', () => {
   });
 
   test('el formulario trae solo lo necesario: aulas (las de su familia marcadas), categorías y estados', async () => {
-    const r = (await app.get(`/api/alumno/${token}`)).body;
+    const r = (await app.get(`/api/movil/${token}`)).body;
     assert.deepEqual(r.familia, { codigo: 'SAN', nombre: 'Sanidad', color: r.familia.color });
     assert.equal(r.espacios.length, 36);
     assert.deepEqual(Object.keys(r.espacios[0]).sort(), ['codigo', 'habitual', 'id', 'nombre', 'planta']);
@@ -148,8 +148,8 @@ describe('QR del alumnado: lo que puede hacer con el token', () => {
   });
 
   test('puede dar de alta material: la familia sale del token y queda registrado como QR', async () => {
-    const r = await app.post(`/api/alumno/${token}/articulos`, {
-      alumno: 'Lucía Pérez', nombre: 'Tensiómetro', espacio_id: app.espacio('P1-03'), cantidad: 3, estado: 'nuevo',
+    const r = await app.post(`/api/movil/${token}/articulos`, {
+      persona: 'Lucía Pérez', nombre: 'Tensiómetro', espacio_id: app.espacio('P1-03'), cantidad: 3, estado: 'nuevo',
       categoria: 'Diagnóstico', ubicacion_detalle: 'Armario 2', marca: 'Omron', numero_serie: 'ABC123',
     });
     assert.equal(r.status, 201);
@@ -166,16 +166,16 @@ describe('QR del alumnado: lo que puede hacer con el token', () => {
   });
 
   test('no puede colarse en otra familia ni rellenar campos que no le corresponden', async () => {
-    const r = await app.post(`/api/alumno/${token}/articulos`, {
-      alumno: 'Pablo', nombre: 'Intento', espacio_id: app.espacio('PB-12'), familia_id: app.familia('IMA'),
+    const r = await app.post(`/api/movil/${token}/articulos`, {
+      persona: 'Pablo', nombre: 'Intento', espacio_id: app.espacio('PB-12'), familia_id: app.familia('IMA'),
       valor: 99999, proveedor: 'Hacker', descripcion: 'x', estado: 'baja',
     });
-    // 'estado: baja' no es un estado válido para el alumnado.
+    // 'estado: baja' no es un estado válido en el QR.
     assert.equal(r.status, 400);
     assert.ok(r.body.detalles.estado);
 
-    const ok = await app.post(`/api/alumno/${token}/articulos`, {
-      alumno: 'Pablo', nombre: 'Intento', espacio_id: app.espacio('PB-12'), familia_id: app.familia('IMA'),
+    const ok = await app.post(`/api/movil/${token}/articulos`, {
+      persona: 'Pablo', nombre: 'Intento', espacio_id: app.espacio('PB-12'), familia_id: app.familia('IMA'),
       valor: 99999, proveedor: 'Hacker', descripcion: 'x',
     });
     assert.equal(ok.status, 201);
@@ -187,34 +187,34 @@ describe('QR del alumnado: lo que puede hacer con el token', () => {
   });
 
   test('valida los datos con mensajes por campo', async () => {
-    const r = await app.post(`/api/alumno/${token}/articulos`, { alumno: ' ', nombre: '', cantidad: 0 });
+    const r = await app.post(`/api/movil/${token}/articulos`, { persona: ' ', nombre: '', cantidad: 0 });
     assert.equal(r.status, 400);
-    assert.deepEqual(Object.keys(r.body.detalles).sort(), ['alumno', 'cantidad', 'espacio_id', 'nombre']);
+    assert.deepEqual(Object.keys(r.body.detalles).sort(), ['cantidad', 'espacio_id', 'nombre', 'persona']);
     // Un aula que no existe se detecta aparte, ya con el formato correcto.
-    const aula = await app.post(`/api/alumno/${token}/articulos`, { alumno: 'A', nombre: 'B', espacio_id: 9999 });
+    const aula = await app.post(`/api/movil/${token}/articulos`, { persona: 'A', nombre: 'B', espacio_id: 9999 });
     assert.equal(aula.status, 400);
     assert.equal(aula.body.detalles.espacio_id, 'El espacio no existe');
-    assert.equal((await app.post(`/api/alumno/${token}/articulos`, { alumno: 'A', nombre: 'B', espacio_id: app.espacio('P1-03'), cantidad: 10000 })).status, 400);
-    assert.equal((await app.post(`/api/alumno/${token}/articulos`, { alumno: 'A'.repeat(61), nombre: 'B', espacio_id: app.espacio('P1-03') })).status, 400);
+    assert.equal((await app.post(`/api/movil/${token}/articulos`, { persona: 'A', nombre: 'B', espacio_id: app.espacio('P1-03'), cantidad: 10000 })).status, 400);
+    assert.equal((await app.post(`/api/movil/${token}/articulos`, { persona: 'A'.repeat(61), nombre: 'B', espacio_id: app.espacio('P1-03') })).status, 400);
   });
 
   test('la cantidad por defecto es 1 y el estado por defecto, "bueno"', async () => {
-    const r = await app.post(`/api/alumno/${token}/articulos`, { alumno: 'Ana', nombre: 'Fonendo', espacio_id: app.espacio('P1-03') });
+    const r = await app.post(`/api/movil/${token}/articulos`, { persona: 'Ana', nombre: 'Fonendo', espacio_id: app.espacio('P1-03') });
     const ficha = (await app.get(`/api/articulos/${r.body.id}`)).body;
     assert.equal(ficha.cantidad, 1);
     assert.equal(ficha.estado, 'bueno');
   });
 
   test('con el token no se puede leer, editar, borrar ni listar nada más', async () => {
-    const art = (await app.post(`/api/alumno/${token}/articulos`, { alumno: 'Ana', nombre: 'Prueba', espacio_id: app.espacio('P1-03') })).body;
+    const art = (await app.post(`/api/movil/${token}/articulos`, { persona: 'Ana', nombre: 'Prueba', espacio_id: app.espacio('P1-03') })).body;
     for (const [metodo, ruta] of [
-      ['GET', `/api/alumno/${token}/articulos`],
-      ['GET', `/api/alumno/${token}/articulos/${art.id}`],
-      ['PATCH', `/api/alumno/${token}/articulos/${art.id}`],
-      ['DELETE', `/api/alumno/${token}/articulos/${art.id}`],
-      ['POST', `/api/alumno/${token}/articulos/${art.id}/baja`],
-      ['GET', `/api/alumno/${token}/movimientos`],
-      ['GET', `/api/alumno/${token}/familias`],
+      ['GET', `/api/movil/${token}/articulos`],
+      ['GET', `/api/movil/${token}/articulos/${art.id}`],
+      ['PATCH', `/api/movil/${token}/articulos/${art.id}`],
+      ['DELETE', `/api/movil/${token}/articulos/${art.id}`],
+      ['POST', `/api/movil/${token}/articulos/${art.id}/baja`],
+      ['GET', `/api/movil/${token}/movimientos`],
+      ['GET', `/api/movil/${token}/familias`],
     ]) {
       const res = await fetch(app.base + ruta, { method: metodo, headers: { 'Content-Type': 'application/json' }, body: metodo === 'GET' || metodo === 'DELETE' ? undefined : '{}' });
       assert.ok([404, 405].includes(res.status), `${metodo} ${ruta} → ${res.status}`);
@@ -224,19 +224,19 @@ describe('QR del alumnado: lo que puede hacer con el token', () => {
 
   test('tokens erróneos dan siempre la misma respuesta 404', async () => {
     for (const t of ['corto', 'a'.repeat(24), '../etc/passwd', `${token}x`, 'x'.repeat(100)]) {
-      const r = await app.get(`/api/alumno/${encodeURIComponent(t)}`);
+      const r = await app.get(`/api/movil/${encodeURIComponent(t)}`);
       assert.equal(r.status, 404, t);
       assert.match(r.body.error, /no es válido/);
     }
-    assert.equal((await app.post(`/api/alumno/${'z'.repeat(24)}/articulos`, { alumno: 'A', nombre: 'B', espacio_id: 1 })).status, 404);
+    assert.equal((await app.post(`/api/movil/${'z'.repeat(24)}/articulos`, { persona: 'A', nombre: 'B', espacio_id: 1 })).status, 404);
   });
 
   test('las respuestas no se guardan en caché y las peticiones enormes se rechazan', async () => {
-    const res = await app.get(`/api/alumno/${token}`, { crudo: true });
+    const res = await app.get(`/api/movil/${token}`, { crudo: true });
     assert.equal(res.headers.get('cache-control'), 'no-store');
-    const enorme = await fetch(`${app.base}/api/alumno/${token}/articulos`, {
+    const enorme = await fetch(`${app.base}/api/movil/${token}/articulos`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ alumno: 'A', nombre: 'B', espacio_id: 1, observaciones: 'x'.repeat(100_000) }),
+      body: JSON.stringify({ persona: 'A', nombre: 'B', espacio_id: 1, observaciones: 'x'.repeat(100_000) }),
     });
     assert.equal(enorme.status, 413);
   });
@@ -249,9 +249,9 @@ describe('QR del alumnado: lo que puede hacer con el token', () => {
   });
 });
 
-describe('interfaz del alumnado', () => {
+describe('página de inventario móvil', () => {
   test('la página móvil se sirve con la política de seguridad y sin indexar', async () => {
-    const res = await app.get('/alumno/', { crudo: true });
+    const res = await app.get('/movil/', { crudo: true });
     assert.equal(res.status, 200);
     assert.match(res.headers.get('content-type'), /text\/html/);
     assert.match(res.headers.get('content-security-policy'), /script-src 'self'/);
@@ -276,13 +276,13 @@ describe('limitador de altas', () => {
   });
 
   test('el tope de altas por token devuelve 429', async () => {
-    const { limites } = await import('../src/servicios/alumnado.js');
+    const { limites } = await import('../src/servicios/movil.js');
     const token = (await app.post(`/api/familias/${app.familia('COM')}/acceso`)).body.token;
     const original = limites.altas.intentar;
     let n = 0;
     limites.altas.intentar = (clave) => (clave === token ? ++n <= 2 : original(clave));
     try {
-      const alta = () => app.post(`/api/alumno/${token}/articulos`, { alumno: 'Z', nombre: 'Item', espacio_id: app.espacio('PB-06') });
+      const alta = () => app.post(`/api/movil/${token}/articulos`, { persona: 'Z', nombre: 'Item', espacio_id: app.espacio('PB-06') });
       assert.equal((await alta()).status, 201);
       assert.equal((await alta()).status, 201);
       const r = await alta();
@@ -291,5 +291,47 @@ describe('limitador de altas', () => {
     } finally {
       limites.altas.intentar = original;
     }
+  });
+});
+
+describe('compatibilidad con los QR ya repartidos (/alumno/...)', () => {
+  let token;
+  before(async () => {
+    token = (await app.post(`/api/familias/${app.familia('SEA')}/acceso`)).body.token;
+  });
+
+  test('la dirección antigua de la API sigue funcionando con el mismo token', async () => {
+    const antigua = await app.get(`/api/alumno/${token}`);
+    const nueva = await app.get(`/api/movil/${token}`);
+    assert.equal(antigua.status, 200);
+    assert.deepEqual(antigua.body, nueva.body);
+    const alta = await app.post(`/api/alumno/${token}/articulos`, { persona: 'Eva', nombre: 'Extintor', espacio_id: app.espacio('P2-01') });
+    assert.equal(alta.status, 201);
+    assert.match(alta.body.codigo, /^SEA-/);
+    assert.equal((await app.get(`/api/alumno/${'z'.repeat(24)}`)).status, 404);
+  });
+
+  test('las páginas ya abiertas que mandan "alumno" en vez de "persona" siguen pudiendo guardar', async () => {
+    const r = await app.post(`/api/movil/${token}/articulos`, { alumno: 'Pablo Antiguo', nombre: 'Casco', espacio_id: app.espacio('P2-01') });
+    assert.equal(r.status, 201);
+    assert.equal((await app.get(`/api/articulos/${r.body.id}`)).body.creado_por, 'Pablo Antiguo (QR)');
+    // Y sin ninguno de los dos, se pide la persona.
+    const sin = await app.post(`/api/movil/${token}/articulos`, { nombre: 'Casco', espacio_id: app.espacio('P2-01') });
+    assert.equal(sin.status, 400);
+    assert.ok(sin.body.detalles.persona);
+  });
+
+  test('el enlace antiguo de la página redirige a la nueva conservando el código', async () => {
+    const conBarra = await fetch(`${app.base}/alumno/?t=${token}`, { redirect: 'manual' });
+    assert.equal(conBarra.status, 301);
+    assert.equal(conBarra.headers.get('location'), `../movil/?t=${token}`);
+    const sinBarra = await fetch(`${app.base}/alumno?t=${token}`, { redirect: 'manual' });
+    assert.equal(sinBarra.status, 301);
+    assert.equal(sinBarra.headers.get('location'), `./movil/?t=${token}`);
+    // Resuelta contra la URL pública (en una subcarpeta) lleva a la página nueva.
+    assert.equal(new URL(conBarra.headers.get('location'), 'https://x.es/Tony_Superinventario/alumno/?t=abc').pathname, '/Tony_Superinventario/movil/');
+    assert.equal(new URL(sinBarra.headers.get('location'), 'https://x.es/Tony_Superinventario/alumno?t=abc').pathname, '/Tony_Superinventario/movil/');
+    // La página nueva existe.
+    assert.equal((await fetch(`${app.base}/movil/?t=${token}`)).status, 200);
   });
 });

@@ -6,7 +6,7 @@ import {
 } from '../ui.js';
 import { dialogoRevision } from '../componentes/revision.js';
 import { dialogoInformeFamilia } from '../componentes/informe.js';
-import { dialogoAccesoAlumnado } from '../componentes/acceso.js';
+import { dialogoQrMovil } from '../componentes/acceso.js';
 
 const GRAVEDAD = { vencida: 0, nunca: 1, pronto: 2, al_dia: 3 };
 
@@ -86,7 +86,7 @@ async function qrDeTodas() {
     for (const f of sin) await api.post(`/familias/${f.id}/acceso`);
     await notificarCambio();
   }
-  location.hash = '#/qr-alumnado?todas=1';
+  location.hash = '#/qr-movil?todas=1';
 }
 
 export function montar(raiz) {
@@ -134,7 +134,7 @@ export function montar(raiz) {
                 <a class="boton pequeno" href="#/plano?familia=${f.id}&modo=revision">🗺 Plano</a>
                 <a class="boton pequeno" href="#/inventario?familia=${f.id}">☰ Inventario</a>
                 <button type="button" class="boton pequeno" data-aulas="${f.id}">Por aula</button>
-                <button type="button" class="boton pequeno" data-qr="${f.id}" title="QR para que el alumnado añada material de esta familia">📱 QR${f.acceso_activo ? ' ✓' : ''}</button>
+                <button type="button" class="boton pequeno" data-qr="${f.id}" title="QR de inventario móvil de esta familia: se escanea y se añade material desde el móvil">📱 QR${f.acceso_activo ? ' ✓' : ''}</button>
                 <button type="button" class="boton pequeno" data-pdf="${f.id}" title="Inventario de la familia por aulas en PDF">📄 PDF</button>
                 <button type="button" class="boton pequeno exito" data-revisar="${f.id}" style="margin-left:auto">✓ Revisar</button>
               </div>
@@ -144,7 +144,7 @@ export function montar(raiz) {
   }
 
   on(raiz, 'click', '[data-accion="nueva"]', () => dialogoFamilia().catch(avisoError));
-  on(raiz, 'click', '[data-qr]', (e, b) => dialogoAccesoAlumnado(familia(b.dataset.qr)));
+  on(raiz, 'click', '[data-qr]', (e, b) => dialogoQrMovil(familia(b.dataset.qr)));
   on(raiz, 'click', '[data-accion="qr-todas"]', () => qrDeTodas().catch(avisoError));
   on(raiz, 'click', '[data-pdf]', (e, b) => dialogoInformeFamilia({ familia_id: Number(b.dataset.pdf) }));
   on(raiz, 'click', '[data-accion="revisar"]', () => dialogoRevision());
