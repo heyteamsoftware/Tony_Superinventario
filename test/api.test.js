@@ -77,7 +77,7 @@ describe('artículos', () => {
   test('edición: registra solo lo que cambia y separa traslados y estados', async () => {
     const art = (await app.post('/api/articulos', nuevo({ nombre: 'Monitor', familia_id: app.familia('IMA'), espacio_id: app.espacio('P1-01') }))).body;
     const r = await app.patch(`/api/articulos/${art.id}`, {
-      nombre: 'Monitor 24"', cantidad: 2, espacio_id: app.espacio('P1-02'), estado: 'averiado', categoria_id: app.categoria('Equipos informáticos'),
+      nombre: 'Monitor 24"', cantidad: 2, espacio_id: app.espacio('P1-02'), estado: 'averiado', categoria: 'Equipos informáticos',
     });
     assert.equal(r.status, 200);
     assert.equal(r.body.espacio_codigo, 'P1-02');
@@ -161,7 +161,7 @@ describe('búsqueda y filtros', () => {
   before(async () => {
     const e = app.espacio('PB-05');
     for (const [nombre, marca] of [['Cámara de fotos', 'Canon'], ['Microscopio óptico', 'Zeiss'], ['Probeta 100% vidrio', '']]) {
-      await app.post('/api/articulos', { nombre, marca, familia_id: app.familia('INA'), espacio_id: e, categoria_id: app.categoria('Material didáctico') });
+      await app.post('/api/articulos', { nombre, marca, familia_id: app.familia('INA'), espacio_id: e, categoria: 'Material didáctico' });
     }
   });
 

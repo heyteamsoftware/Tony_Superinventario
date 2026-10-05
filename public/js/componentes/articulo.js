@@ -49,7 +49,9 @@ export async function formularioArticulo({ articulo = null, valores = {} } = {})
         <label class="campo c4"><span class="obligatorio">Nombre del artículo</span>
           <input name="nombre" value="${a.nombre ?? ''}" maxlength="200" required placeholder="Ej.: Camilla articulada, Ordenador portátil…" autofocus></label>
         <label class="campo c2"><span>Categoría</span>
-          <select name="categoria_id" data-tipo="entero">${opcionesCategorias(a.categoria_id)}</select></label>
+          <input name="categoria" list="lista-categorias" value="${a.categoria_nombre ?? ''}" maxlength="80" autocomplete="off" placeholder="Elige o escribe una nueva">
+          <datalist id="lista-categorias" data-categorias>${meta.categorias.map((c) => html`<option value="${c.nombre}"></option>`)}</datalist>
+          <span class="ayuda">Si no existe, se crea y queda guardada.</span></label>
 
         <label class="campo c3"><span class="obligatorio">Familia profesional</span>
           <select name="familia_id" data-tipo="entero" required>${opcionesFamilias(a.familia_id, { vacia: 'Elige una familia…' })}</select></label>
@@ -93,6 +95,12 @@ export async function formularioArticulo({ articulo = null, valores = {} } = {})
       if (boton?.value !== 'otro') {
         aviso(`${creado.codigo} dado de alta`);
         return creado;
+      }
+      // Una categoría recién creada ya se ofrece en las siguientes altas de este diálogo.
+      const nueva = creado.categoria_nombre;
+      const lista = form.querySelector('[data-categorias]');
+      if (nueva && ![...lista.options].some((o) => o.value.toLowerCase() === nueva.toLowerCase())) {
+        lista.insertAdjacentHTML('beforeend', String(html`<option value="${nueva}"></option>`));
       }
       // Inventariado rápido: conserva familia, aula, categoría y estado.
       for (const campo of ['nombre', 'marca', 'modelo', 'numero_serie', 'valor', 'descripcion', 'observaciones']) {
@@ -212,7 +220,7 @@ export function describirMovimiento(m) {
   switch (m.tipo) {
     case 'alta':
       return {
-        ico: '＋', titulo: d.origen_codigo ? 'Alta por traslado parcial' : (d.importado ? 'Alta por importación' : 'Alta en el inventario'),
+        ico: '＋', titulo: d.origen_codigo ? 'Alta por traslado parcial' : (d.importado ? 'Alta por importación' : (d.via === 'qr' ? 'Alta desde el QR del alumnado' : 'Alta en el inventario')),
         detalle: d.origen_codigo
           ? html`${d.cantidad} uds. separadas de <b>${d.origen_codigo}</b> y llevadas a ${lugarTexto(d.espacio)}`
           : html`${d.cantidad} ${d.cantidad === 1 ? 'unidad' : 'unidades'} en ${lugarTexto(d.espacio)}`,

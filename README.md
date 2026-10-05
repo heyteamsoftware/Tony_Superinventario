@@ -19,6 +19,8 @@ No usa contraseñas: al entrar se pide el nombre, que queda en el historial de c
 - **Revisiones del inventario**: cada familia confirma, aula por aula o entera, que su material coincide (marcando cada artículo). También cuentan como repaso las altas, bajas, traslados y ediciones.
   - Si una familia pasa **más de 365 días** sin repasar su inventario aparece un aviso en el plano, en el menú y en su ficha (el plazo y el preaviso se configuran en *Datos*).
 - **Tabla de inventario** con búsqueda sin tildes, filtros, orden, paginación y acciones en lote (trasladar, cambiar estado, imprimir etiquetas).
+- **QR del alumnado**: cada familia puede tener un QR (botón «📱 QR» en *Familias*, o «Carteles QR de todas»). Al escanearlo, el alumnado abre una pantalla pensada para móvil (`/alumno/`) donde **solo puede añadir material de esa familia**: elige el aula, escribe qué es, cuántos hay y en qué estado está. No puede ver, editar, mover ni borrar nada. Cada alta queda en el historial con su nombre y la marca «(QR)». El QR se puede imprimir como cartel, regenerar (el anterior deja de funcionar al instante) o desactivar.
+- **Categorías libres**: no hay lista cerrada. Se escribe la categoría al añadir material; si no existe se crea y queda guardada para elegirla después (sin distinguir mayúsculas ni tildes). En *Datos* se pueden renombrar o quitar.
 - **Inventario de una familia en PDF**, ordenado por planta y aula (y por nombre dentro de cada aula), con subtotales, estado de revisión, casilla por artículo para la revisión física y bloque de firma. Opcionalmente con valor económico y bajas. Desde *Familias*, *Inventario* o *Datos*.
 - **Importación desde Excel (CSV)** con comprobación previa: o entran todas las filas o ninguna, con un informe de errores por fila. La **exportación** abre directamente en Excel y se puede volver a importar.
 - **Copia de seguridad** de la base de datos con un clic.
@@ -110,5 +112,6 @@ Decisiones técnicas:
 
 - **Sin compilación ni dependencias nativas**: Express, `qrcode`, `pdfkit` y el SQLite integrado de Node. Se instala en cualquier PC del centro con `npm install`.
 - **Integridad**: claves foráneas, restricciones `CHECK`, transacciones en todas las operaciones compuestas y un historial de movimientos que no se modifica. Los códigos de inventario (`SAN-00012`) no cambian ni se reutilizan.
+- **Acceso del alumnado**: el token de cada familia es aleatorio (144 bits) y solo se entrega a la gestión; la familia del alta sale siempre del token (se ignora cualquier otro dato que mande el cliente), hay un tope de altas por token y las peticiones tienen tamaño limitado. Todo vive bajo `/alumno/` y `/api/alumno/`, de modo que si se protege el resto de la aplicación con contraseña, esas dos rutas se pueden dejar abiertas.
 - **Seguridad** (aunque sea una app interna): todo el HTML se genera escapando los datos, consultas parametrizadas, `Content-Security-Policy` estricta y protección contra fórmulas en los CSV exportados.
 - **Plano**: la geometría de cada espacio está en `src/db/semilla.js`. Los nombres, grupos y familias habituales de cada aula se editan desde la aplicación (*Datos → Espacios del plano*).

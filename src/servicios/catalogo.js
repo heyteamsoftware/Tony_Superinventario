@@ -64,7 +64,7 @@ export function actualizarEspacio(db, id, entrada) {
 
 export function listarFamilias(db) {
   return db.prepare(`
-    SELECT f.id, f.codigo, f.nombre, f.color,
+    SELECT f.id, f.codigo, f.nombre, f.color, (f.acceso_token IS NOT NULL) AS acceso_activo,
            COUNT(a.id) AS articulos,
            COALESCE(SUM(a.cantidad), 0) AS unidades,
            COALESCE(SUM(a.cantidad * a.valor), 0) AS valor,
@@ -134,6 +134,15 @@ export function listarCategorias(db) {
 function buscarCategoriaPorNombre(db, nombre, excluirId = 0) {
   return db.prepare('SELECT id, nombre FROM categorias WHERE id <> ?').all(excluirId)
     .find((c) => normalizar(c.nombre) === normalizar(nombre));
+}
+
+// Devuelve el id de la categoría con ese nombre y, si no existe, la crea: así
+// las categorías nacen al escribirlas y quedan guardadas para elegirlas luego.
+// Sin distinguir mayúsculas ni tildes: "material sanitario" encuentra "Material sanitario".
+export function resolverCategoria(db, nombre) {
+  const existente = buscarCategoriaPorNombre(db, nombre);
+  if (existente) return existente.id;
+  return Number(db.prepare('INSERT INTO categorias (nombre) VALUES (?)').run(nombre).lastInsertRowid);
 }
 
 export function crearCategoria(db, entrada) {

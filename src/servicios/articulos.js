@@ -2,6 +2,7 @@ import { ESTADOS, transaccion } from '../db/index.js';
 import { reglas, validar } from '../lib/validar.js';
 import { ErrorApi, noEncontrado, datosNoValidos } from '../lib/errores.js';
 import { ahora, normalizar } from '../lib/texto.js';
+import { resolverCategoria } from './catalogo.js';
 
 export const ESTADOS_ACTIVOS = ESTADOS.filter((e) => e !== 'baja');
 
@@ -13,6 +14,8 @@ export const ESQUEMA_ARTICULO = {
   familia_id: entero({ requerido: true, min: 1 }),
   espacio_id: entero({ requerido: true, min: 1 }),
   categoria_id: entero({ min: 1 }),
+  // Por nombre: si no existe se crea y queda guardada. Manda sobre categoria_id.
+  categoria: texto({ max: 80 }),
   cantidad: entero({ min: 0, max: 1_000_000 }),
   estado: enumerado(ESTADOS_ACTIVOS),
   ubicacion_detalle: texto({ max: 200 }),
@@ -25,7 +28,8 @@ export const ESQUEMA_ARTICULO = {
   observaciones: texto({ max: 4000 }),
 };
 
-const CAMPOS_EDITABLES = Object.keys(ESQUEMA_ARTICULO);
+// 'categoria' (nombre) se traduce a categoria_id antes de guardar.
+const CAMPOS_EDITABLES = Object.keys(ESQUEMA_ARTICULO).filter((c) => c !== 'categoria');
 
 const SELECT_ARTICULO = `
   SELECT a.*,
@@ -185,8 +189,9 @@ function insertar(db, datos, usuario) {
 // ── Operaciones ──────────────────────────────────────────────────────────
 
 export function crear(db, entrada, usuario, { detalleAlta = {} } = {}) {
-  const datos = validar(ESQUEMA_ARTICULO, entrada);
+  const { categoria, ...datos } = validar(ESQUEMA_ARTICULO, entrada);
   return transaccion(db, () => {
+    if (categoria) datos.categoria_id = resolverCategoria(db, categoria);
     comprobarReferencias(db, datos);
     const id = insertar(db, datos, usuario);
     const art = obtener(db, id);
@@ -196,9 +201,14 @@ export function crear(db, entrada, usuario, { detalleAlta = {} } = {}) {
 }
 
 export function actualizar(db, id, entrada, usuario) {
-  const datos = validar(ESQUEMA_ARTICULO, entrada, { parcial: true });
+  let datos = validar(ESQUEMA_ARTICULO, entrada, { parcial: true });
   return transaccion(db, () => {
     const antes = obtener(db, id);
+    if ('categoria' in datos) {
+      // En una edición, una categoría vacía la quita.
+      const { categoria, ...resto } = datos;
+      datos = { ...resto, categoria_id: categoria ? resolverCategoria(db, categoria) : null };
+    }
     if (antes.estado === 'baja' && 'estado' in datos) {
       throw new ErrorApi(409, 'El artículo está dado de baja: reactívalo para cambiar su estado');
     }

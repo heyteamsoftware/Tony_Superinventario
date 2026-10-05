@@ -142,9 +142,24 @@ const MIGRACIONES = [
       for (const f of e.familias) insEF.run(lastInsertRowid, familiaId[f]);
     }
   },
+
+  // Acceso del alumnado por QR (un token secreto por familia) y fin de las
+  // categorías predefinidas: ahora se crean al escribirlas y quedan guardadas.
+  function accesoAlumnadoYCategoriasLibres(db) {
+    db.exec(`
+      ALTER TABLE familias ADD COLUMN acceso_token TEXT;
+      CREATE UNIQUE INDEX idx_familias_acceso_token ON familias(acceso_token) WHERE acceso_token IS NOT NULL;
+
+      -- Se retiran las categorías de la semilla que ningún artículo usa;
+      -- las que ya se estén usando se conservan.
+      DELETE FROM categorias WHERE id NOT IN (SELECT categoria_id FROM articulos WHERE categoria_id IS NOT NULL);
+    `);
+  },
 ];
 
-export function abrirDb(fichero = ':memory:') {
+// `version` permite abrir una base de datos en una versión anterior del
+// esquema (solo se usa en los tests de migración).
+export function abrirDb(fichero = ':memory:', { version = MIGRACIONES.length } = {}) {
   if (fichero !== ':memory:') mkdirSync(dirname(fichero), { recursive: true });
   const db = new DatabaseSync(fichero);
   db.exec('PRAGMA foreign_keys = ON');
@@ -154,13 +169,13 @@ export function abrirDb(fichero = ':memory:') {
   }
   // Búsquedas sin distinguir mayúsculas ni tildes ("camara" encuentra "Cámara").
   db.function('normalizar', { deterministic: true }, (s) => normalizar(s));
-  migrar(db);
+  migrar(db, version);
   return db;
 }
 
-function migrar(db) {
+function migrar(db, hasta) {
   const version = db.prepare('PRAGMA user_version').get().user_version;
-  for (let v = version; v < MIGRACIONES.length; v++) {
+  for (let v = version; v < hasta; v++) {
     transaccion(db, () => {
       MIGRACIONES[v](db);
       db.exec(`PRAGMA user_version = ${v + 1}`);

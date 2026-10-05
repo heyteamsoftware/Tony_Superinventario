@@ -575,3 +575,37 @@ dialog.modal::backdrop { background: rgba(14, 17, 33, .5); backdrop-filter: blur
   .hoja-etiquetas { grid-template-columns: repeat(3, 1fr); gap: 4mm; }
   .etiqueta { border-color: #999; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }
+
+/* ── QR del alumnado: diálogo y cartel imprimible ───────────────────────── */
+.qr-dialogo { display: flex; flex-direction: column; gap: 14px; align-items: stretch; }
+.qr-marco { align-self: center; padding: 14px; background: #fff; border: 1px solid var(--linea); border-radius: 14px; box-shadow: var(--sombra-1); line-height: 0; }
+.qr-marco img { width: 220px; height: 220px; display: block; }
+
+.carteles { display: flex; flex-direction: column; align-items: center; gap: 24px; }
+.cartel {
+  width: 100%; max-width: 640px; background: #fff; border: 1px solid var(--linea-2); border-radius: 18px; overflow: hidden;
+  box-shadow: var(--sombra-2); break-inside: avoid;
+}
+.cartel-banda { height: 22px; background: var(--c); }
+.cartel-cuerpo { padding: 28px 40px 32px; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 6px; }
+.cartel-logo { width: 84px; height: 84px; }
+.cartel-centro { font-size: 12px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: var(--tenue); }
+.cartel h2 { font-size: 34px; line-height: 1.15; color: var(--c); margin-top: 6px; letter-spacing: -.02em; }
+.cartel-sub { font-size: 18px; color: var(--tinta-2); margin-bottom: 10px; }
+.cartel-qr { padding: 16px; background: #fff; border: 3px solid var(--c); border-radius: 20px; line-height: 0; }
+.cartel-qr img { width: 300px; height: 300px; display: block; }
+.cartel-pasos { text-align: left; margin: 18px 0 4px; padding-left: 24px; font-size: 16px; line-height: 1.55; color: var(--tinta); max-width: 440px; }
+.cartel-pasos li { padding-left: 4px; }
+.cartel-pasos li::marker { font-weight: 800; color: var(--c); }
+.cartel-nota { margin-top: 10px; padding: 8px 14px; border-radius: 10px; background: var(--neutro-suave); font-size: 13px; color: var(--tinta-2); }
+.cartel-url { margin-top: 6px; font: 11px var(--mono); color: var(--tenue); word-break: break-all; }
+
+@media print {
+  .carteles { display: block; }
+  .cartel { max-width: none; border: 0; box-shadow: none; border-radius: 0; page-break-after: always; break-after: page; min-height: 270mm; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .cartel:last-child { page-break-after: auto; break-after: auto; }
+  .cartel-banda { height: 14mm; }
+  .cartel-cuerpo { padding-top: 14mm; }
+  .cartel-qr img { width: 90mm; height: 90mm; }
+  .cartel h2 { font-size: 30pt; }
+}

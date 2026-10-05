@@ -11,6 +11,8 @@ import * as estadisticas from './servicios/estadisticas.js';
 import * as datos from './servicios/datos.js';
 import * as revisiones from './servicios/revisiones.js';
 import * as informes from './servicios/informes.js';
+import * as alumnado from './servicios/alumnado.js';
+import { crearApiAlumno } from './api-alumno.js';
 
 // Sin contraseñas: cada petición lleva el nombre de quien la hace en la
 // cabecera X-Usuario (codificada con encodeURIComponent) para el historial.
@@ -41,6 +43,8 @@ const opcionesListado = (q) => ({
 
 export function crearApi(db) {
   const api = Router();
+  // Acceso del alumnado por QR: va antes que nada, con su propio límite de tamaño.
+  api.use('/alumno', crearApiAlumno(db));
   api.use(json({ limit: '10mb' }));
 
   // ── Catálogo ───────────────────────────────────────────────────────────
@@ -58,6 +62,15 @@ export function crearApi(db) {
 
   api.get('/familias', (req, res) => res.json(revisiones.familiasConRevision(db)));
   api.get('/familias/:id/espacios', (req, res) => res.json(revisiones.espaciosDeFamilia(db, id(req))));
+
+  // QR del alumnado: el token solo se entrega por aquí (no va en /meta).
+  // Generar uno nuevo invalida el anterior; borrarlo desactiva el acceso.
+  api.get('/familias/:id/acceso', (req, res) => res.json(alumnado.estadoAcceso(db, id(req))));
+  api.post('/familias/:id/acceso', (req, res) => res.status(201).json(alumnado.generarAcceso(db, id(req))));
+  api.delete('/familias/:id/acceso', (req, res) => {
+    alumnado.revocarAcceso(db, id(req));
+    res.status(204).end();
+  });
   // Informe PDF del inventario de una familia, ordenado por aula. Se abre con
   // un enlace normal, así que el nombre de quien lo genera va en ?por=
   api.get('/familias/:id/inventario.pdf', async (req, res) => {

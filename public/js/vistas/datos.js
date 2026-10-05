@@ -65,6 +65,7 @@ export function montar(raiz) {
 
         <section class="tarjeta tarjeta-cuerpo">
           <div class="titulo-bloque"><h2>Categorías</h2><button type="button" class="boton pequeno" data-accion="nueva-categoria">＋ Nueva</button></div>
+          <p class="tenue pequeno" style="margin-bottom:10px">No hay lista cerrada: se crean al escribirlas al añadir material (también desde el QR del alumnado), quedan guardadas y se pueden elegir después. Aquí puedes renombrarlas o quitar las que sobren.</p>
           <div class="lista-simple" data-categorias></div>
         </section>
 
@@ -79,11 +80,11 @@ export function montar(raiz) {
   const soltar = $('[data-soltar]', raiz);
 
   function pintarCatalogos() {
-    pintar($('[data-categorias]', raiz), html`${meta.categorias.map((c) => html`<div>
+    pintar($('[data-categorias]', raiz), meta.categorias.length ? html`${meta.categorias.map((c) => html`<div>
       <span class="nombre">${c.nombre} <span class="tenue pequeno">· ${plural(c.articulos, 'artículo', 'artículos')}</span></span>
       <button type="button" class="boton fantasma pequeno icono" data-renombrar="${c.id}" title="Renombrar">✎</button>
       <button type="button" class="boton fantasma pequeno icono peligro" data-borrar-categoria="${c.id}" title="Eliminar">🗑</button>
-    </div>`)}`);
+    </div>`)}` : html`<p class="tenue" style="padding:8px 0">Todavía no hay categorías. Aparecerán aquí en cuanto alguien escriba una al añadir material.</p>`);
     pintar($('[data-espacios]', raiz), html`
       <thead><tr><th>Código</th><th>Nombre</th><th>Planta</th><th>Tipo</th><th>Grupos</th><th class="num">Artículos</th><th></th></tr></thead>
       <tbody>${meta.espacios.map((e) => html`<tr>

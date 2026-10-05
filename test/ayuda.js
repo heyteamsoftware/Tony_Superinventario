@@ -25,7 +25,8 @@ export async function arrancar() {
   const meta = (await pedir('GET', '/api/meta')).body;
   const familia = (codigo) => meta.familias.find((f) => f.codigo === codigo).id;
   const espacio = (codigo) => meta.espacios.find((e) => e.codigo === codigo).id;
-  const categoria = (nombre) => meta.categorias.find((c) => c.nombre === nombre).id;
+  // Las categorías ya no vienen de serie: se buscan en la base de datos cuando hacen falta.
+  const categoria = (nombre) => db.prepare('SELECT id FROM categorias WHERE nombre = ?').get(nombre).id;
 
   return {
     db, base, meta, familia, espacio, categoria,

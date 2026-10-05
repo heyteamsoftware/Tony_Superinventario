@@ -23,6 +23,8 @@ export const FAMILIAS = [
   { codigo: 'ORI', nombre: 'Orientación', color: '#099268' },
 ];
 
+// Solo las siembra la migración 1; la migración 2 las retira si nadie las usa.
+// Las categorías nuevas se crean desde la aplicación al escribirlas.
 export const CATEGORIAS = [
   'Mobiliario',
   'Equipos informáticos',

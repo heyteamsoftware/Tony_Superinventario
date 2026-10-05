@@ -1,0 +1,113 @@
+/* Interfaz móvil del alumnado: solo para añadir material. Se apoya en los
+   tokens y componentes de ../css/app.css y ajusta tamaños para el pulgar. */
+body.alumno { font-size: 16px; background: var(--bg); min-height: 100dvh; -webkit-tap-highlight-color: transparent; }
+.alumno #app { max-width: 560px; margin: 0 auto; min-height: 100dvh; display: flex; flex-direction: column; background: var(--bg); }
+
+/* Cabecera */
+.al-cab {
+  display: flex; align-items: center; gap: 12px; padding: 12px 16px; padding-top: calc(12px + env(safe-area-inset-top));
+  background: var(--cabecera); color: #fff;
+}
+.al-cab img { width: 40px; height: 40px; border-radius: 50%; background: #fff; flex: none; }
+.al-cab .marca-texto { flex: 1; min-width: 0; }
+.al-cab .marca-nombre { font-size: 17px; font-weight: 500; letter-spacing: -.02em; }
+.al-persona {
+  display: inline-flex; align-items: center; gap: 8px; max-width: 46%; height: 34px; padding: 0 12px 0 4px; flex: none;
+  border-radius: 17px; border: 1px solid rgba(255, 255, 255, .18); background: rgba(255, 255, 255, .06); color: #e3e6f3; font-size: 13px;
+}
+.al-persona .avatar { width: 26px; height: 26px; font-size: 11px; }
+.al-persona span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.al-familia {
+  display: flex; align-items: center; gap: 14px; padding: 16px; color: #fff; background: var(--c);
+}
+.al-familia .sigla {
+  display: grid; place-items: center; width: 52px; height: 52px; border-radius: 14px; flex: none;
+  background: rgba(255, 255, 255, .2); font: 800 14px var(--mono);
+}
+.al-familia small { display: block; opacity: .85; font-size: 13px; }
+.al-familia h1 { font-size: 21px; line-height: 1.2; }
+
+.al-cuerpo { flex: 1; padding: 16px 16px 8px; display: flex; flex-direction: column; gap: 16px; }
+.al-aviso-final { padding: 4px 16px 24px; text-align: center; color: var(--tenue); font-size: 13px; }
+
+/* Campos más grandes (y a 16 px para que iOS no haga zoom al enfocar) */
+.alumno .campo > span, .alumno .campo > label { font-size: 14px; }
+.alumno .campo input, .alumno .campo select, .alumno .campo textarea { font-size: 16px; height: 50px; border-radius: 12px; padding: 0 14px; }
+.alumno .campo textarea { height: auto; min-height: 84px; padding: 12px 14px; }
+.alumno .campo select { padding-right: 36px; }
+.alumno .campo .ayuda { font-size: 12.5px; }
+
+/* Cantidad con − / + */
+.stepper { display: grid; grid-template-columns: 56px 1fr 56px; gap: 8px; }
+.stepper button {
+  height: 50px; border-radius: 12px; border: 1px solid var(--linea-2); background: var(--superficie);
+  font-size: 26px; line-height: 1; color: var(--tinta-2); cursor: pointer; touch-action: manipulation;
+}
+.stepper button:active { background: var(--neutro-suave); transform: scale(.97); }
+.alumno .stepper input { text-align: center; font-size: 20px; font-weight: 700; padding: 0; }
+
+/* Estado como botones */
+.pastillas { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.pastilla { position: relative; }
+.pastilla input { position: absolute; opacity: 0; inset: 0; width: 100%; height: 100%; margin: 0; cursor: pointer; }
+.pastilla span {
+  display: grid; place-items: center; height: 46px; border-radius: 12px; border: 1.5px solid var(--linea-2);
+  background: var(--superficie); font-size: 14px; font-weight: 650; color: var(--tinta-2); transition: all .12s;
+}
+.pastilla input:checked + span { border-color: var(--acento); background: var(--acento-suave); color: var(--acento-2); box-shadow: 0 0 0 3px rgba(79, 70, 229, .12); }
+.pastilla input:focus-visible + span { outline: 2px solid var(--acento); outline-offset: 2px; }
+
+details.mas { border: 1px solid var(--linea); border-radius: 14px; background: var(--superficie); }
+details.mas summary { list-style: none; cursor: pointer; padding: 14px 16px; font-weight: 650; color: var(--tinta-2); display: flex; align-items: center; justify-content: space-between; }
+details.mas summary::-webkit-details-marker { display: none; }
+details.mas summary::after { content: "＋"; color: var(--tenue); }
+details.mas[open] summary::after { content: "−"; }
+details.mas .mas-cuerpo { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 14px; }
+
+/* Barra de guardado fija abajo */
+.al-barra {
+  position: sticky; bottom: 0; z-index: 10; padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
+  background: linear-gradient(to top, var(--bg) 78%, rgba(243, 244, 248, 0)); margin-top: auto;
+}
+.al-barra .boton { width: 100%; height: 54px; font-size: 17px; border-radius: 14px; }
+
+/* Aviso de éxito */
+.al-exito {
+  display: flex; align-items: center; gap: 14px; padding: 14px 16px; border-radius: 14px;
+  background: var(--ok-suave); border: 1px solid #b4e5cb; color: #0a6b43; animation: aparecer .25s ease-out;
+}
+.al-exito .tic {
+  display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; flex: none;
+  background: var(--ok); color: #fff; font-size: 22px; font-weight: 800;
+}
+.al-exito b { display: block; font-size: 16px; }
+.al-exito .codigo { font: 800 18px var(--mono); letter-spacing: .02em; }
+.al-exito small { font-size: 13px; opacity: .9; }
+
+.al-error { padding: 12px 14px; border-radius: 12px; background: var(--peligro-suave); border: 1px solid #fbc6cf; color: #8f1428; font-size: 14px; }
+
+/* Lista de lo añadido desde este móvil */
+.al-lista h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .07em; color: var(--tenue); margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+.al-lista h2 button { all: unset; cursor: pointer; font-size: 12px; text-transform: none; letter-spacing: 0; color: var(--acento); }
+.al-lista ul { list-style: none; margin: 0; padding: 0; border: 1px solid var(--linea); border-radius: 14px; background: var(--superficie); overflow: hidden; }
+.al-lista li { display: grid; grid-template-columns: 1fr auto; gap: 2px 12px; padding: 11px 14px; border-bottom: 1px solid var(--linea); }
+.al-lista li:last-child { border-bottom: 0; }
+.al-lista .n { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.al-lista .c { font-weight: 800; text-align: right; }
+.al-lista .d { grid-column: 1 / -1; font-size: 12.5px; color: var(--tenue); }
+
+/* Pantallas de nombre / error */
+.al-centro { padding: 28px 20px; display: flex; flex-direction: column; gap: 18px; }
+.al-centro h1 { font-size: 24px; }
+.al-centro p { color: var(--tinta-2); }
+.al-grande { text-align: center; padding: 48px 24px; }
+.al-grande .ico { font-size: 52px; display: block; margin-bottom: 12px; }
+.al-grande h1 { font-size: 21px; margin-bottom: 8px; }
+.al-grande p { color: var(--tenue); }
+
+.al-cab .marca-centro { font-size: 10.5px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; color: #9aa1bd; }
+.al-cab .marca-texto { display: flex; flex-direction: column; line-height: 1.1; }
+.al-cab .marca-nombre b { font-weight: 800; background: linear-gradient(90deg, #f2a0ae, #8fc0ef); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.al-exito .codigo { display: block; }
+.al-lista li { align-items: baseline; }

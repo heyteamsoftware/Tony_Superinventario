@@ -17,7 +17,6 @@ if (db.prepare('SELECT COUNT(*) AS n FROM articulos').get().n > 0) {
 
 const fam = Object.fromEntries(db.prepare('SELECT codigo, id FROM familias').all().map((f) => [f.codigo, f.id]));
 const esp = Object.fromEntries(db.prepare('SELECT codigo, id FROM espacios').all().map((e) => [e.codigo, e.id]));
-const cat = Object.fromEntries(db.prepare('SELECT nombre, id FROM categorias').all().map((c) => [c.nombre, c.id]));
 
 // [familia, espacio, categoría, nombre, cantidad, extra]
 const MATERIAL = [
@@ -79,7 +78,7 @@ const MATERIAL = [
 
 transaccion(db, () => {
   const creados = MATERIAL.map(([f, e, c, nombre, cantidad, extra]) => crear(db, {
-    nombre, familia_id: fam[f], espacio_id: esp[e], categoria_id: cat[c], cantidad, estado: 'bueno', ...extra,
+    nombre, familia_id: fam[f], espacio_id: esp[e], categoria: c, cantidad, estado: 'bueno', ...extra,
   }, 'Datos de ejemplo'));
 
   // Un poco de historia: un traslado parcial, una avería y una baja.
