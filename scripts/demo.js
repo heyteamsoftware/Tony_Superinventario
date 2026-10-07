@@ -29,6 +29,8 @@ const MATERIAL = [
   ['SEA', 'P2-04', 'Equipos de seguridad y emergencias', 'Camilla de rescate nido', 2, { valor: 380 }],
   ['SEA', 'P2-05', 'Equipos de seguridad y emergencias', 'Collarín cervical', 15, { valor: 12.5 }],
   ['SEA', 'P2-07', 'Equipos de seguridad y emergencias', 'Tablero espinal', 3, { valor: 210 }],
+  ['SEA', 'P2-09', 'Equipos de seguridad y emergencias', 'Botiquín de campaña', 6, { valor: 48 }],
+  ['SEA', 'PB-14', 'Equipos de seguridad y emergencias', 'Cono de señalización', 40, { valor: 6.5 }],
   ['SAN', 'P2-05', 'Material sanitario', 'Sillón dental de prácticas', 2, { marca: 'Fedesa', valor: 3200 }],
   ['SAN', 'P2-06', 'Material sanitario', 'Cama articulada', 2, { valor: 890 }],
   ['SAN', 'P1-03', 'Material sanitario', 'Grúa de traslado de pacientes', 1, { marca: 'Invacare', valor: 1150 }],

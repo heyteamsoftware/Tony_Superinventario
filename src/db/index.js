@@ -7,6 +7,21 @@ import { normalizar } from '../lib/texto.js';
 export const ESTADOS = ['nuevo', 'bueno', 'regular', 'averiado', 'baja'];
 
 // Cada migración se aplica una sola vez; PRAGMA user_version guarda la última.
+// Añade un espacio al plano y lo asocia a sus familias habituales. Idempotente
+// (INSERT OR IGNORE): si el código ya existe, no se toca. Lo usan las migraciones
+// que añaden espacios.
+function insertarEspacio(db, e) {
+  const planta = db.prepare('SELECT id FROM plantas WHERE codigo = ?').get(e.planta);
+  db.prepare(`
+    INSERT OR IGNORE INTO espacios (codigo, nombre, planta_id, tipo, grupos, color, x, y, w, h)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(e.codigo, e.nombre, planta.id, e.tipo, e.grupos, e.color, e.x, e.y, e.w, e.h);
+  const { id } = db.prepare('SELECT id FROM espacios WHERE codigo = ?').get(e.codigo);
+  for (const codigo of e.familias) {
+    const familia = db.prepare('SELECT id FROM familias WHERE codigo = ?').get(codigo);
+    if (familia) db.prepare('INSERT OR IGNORE INTO espacio_familias (espacio_id, familia_id) VALUES (?, ?)').run(id, familia.id);
+  }
+}
+
 const MIGRACIONES = [
   function esquemaInicial(db) {
     db.exec(`
@@ -188,6 +203,21 @@ const MIGRACIONES = [
     if (radio) {
       db.prepare('INSERT OR IGNORE INTO espacio_familias (espacio_id, familia_id) VALUES (?, ?)').run(espacio.id, radio.id);
     }
+  },
+
+  // Dos almacenes de la familia de Seguridad y Medio Ambiente:
+  //  · P2-09, en la 2ª planta, pegado al aula de Emergencias 1º-2º (P2-07);
+  //  · PB-14, en el exterior de la planta baja (campo de maniobras), en la franja
+  //    libre entre ATECA/Plaza y el taller de mecanizado.
+  function almacenesDeSeguridad(db) {
+    insertarEspacio(db, {
+      codigo: 'P2-09', planta: 'P2', nombre: 'Almacén de Seguridad de Emergencia', tipo: 'almacen',
+      grupos: 'Seguridad y Medio Ambiente', color: '#d5e5d0', x: 80, y: 493, w: 150, h: 110, familias: ['SEA'],
+    });
+    insertarEspacio(db, {
+      codigo: 'PB-14', planta: 'PB', nombre: 'Almacén Campo de Maniobras', tipo: 'almacen',
+      grupos: 'Exterior · Campo de Maniobras', color: '#c9e4b8', x: 470, y: 442, w: 232, h: 55, familias: ['SEA'],
+    });
   },
 ];
 

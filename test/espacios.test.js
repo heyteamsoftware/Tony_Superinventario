@@ -71,14 +71,14 @@ describe('migración: subsala Ateca-Radio', () => {
       v3.close();
 
       const actual = abrirDb(fichero);
-      assert.equal(actual.prepare('SELECT COUNT(*) AS n FROM espacios').get().n, 37);
+      assert.equal(actual.prepare('SELECT COUNT(*) AS n FROM espacios').get().n, 39);
       const sala = actual.prepare("SELECT e.nombre, p.codigo AS planta FROM espacios e JOIN plantas p ON p.id = e.planta_id WHERE e.codigo = 'PB-13'").get();
       assert.deepEqual({ ...sala }, { nombre: 'Ateca-Radio', planta: 'PB' });
       const habitual = actual.prepare(`SELECT f.codigo FROM espacio_familias ef JOIN familias f ON f.id = ef.familia_id
                                        JOIN espacios e ON e.id = ef.espacio_id WHERE e.codigo = 'PB-13'`).all();
       assert.deepEqual(habitual.map((h) => h.codigo), ['RAD']);
       assert.equal(actual.prepare('SELECT COUNT(*) AS n FROM articulos').get().n, 1, 'los datos existentes se conservan');
-      assert.equal(actual.prepare('PRAGMA user_version').get().user_version, 4);
+      assert.equal(actual.prepare('PRAGMA user_version').get().user_version, 5);
       actual.close();
 
       // Volver a abrir no la duplica.

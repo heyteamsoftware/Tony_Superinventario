@@ -18,7 +18,7 @@ describe('catálogo inicial', () => {
   test('3 plantas, 12 familias y todos los espacios del plano', () => {
     assert.equal(app.meta.plantas.length, 3);
     assert.equal(app.meta.familias.length, 12);
-    assert.equal(app.meta.espacios.length, 37);
+    assert.equal(app.meta.espacios.length, 39);
     assert.deepEqual(app.meta.plantas.map((p) => p.codigo), ['P2', 'P1', 'PB']);
     const cafeteria = app.meta.espacios.find((e) => e.codigo === 'PB-02');
     assert.deepEqual(cafeteria.familia_ids.sort(), [app.familia('HOT'), app.familia('INA')].sort());

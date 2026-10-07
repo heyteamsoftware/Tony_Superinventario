@@ -75,7 +75,7 @@ describe('migración: categorías predefinidas', () => {
       const quedan = actual.prepare('SELECT nombre FROM categorias').all().map((c) => c.nombre);
       assert.deepEqual(quedan, ['Mobiliario']);
       assert.equal(actual.prepare('SELECT categoria_id FROM articulos').get().categoria_id, mobiliario);
-      assert.equal(actual.prepare('PRAGMA user_version').get().user_version, 4);
+      assert.equal(actual.prepare('PRAGMA user_version').get().user_version, 5);
       actual.close();
     } finally {
       rmSync(dir, { recursive: true, force: true });
@@ -137,7 +137,7 @@ describe('QR de inventario móvil: lo que puede hacer con el token', () => {
   test('el formulario trae solo lo necesario: aulas (las de su familia marcadas), categorías y estados', async () => {
     const r = (await app.get(`/api/movil/${token}`)).body;
     assert.deepEqual(r.familia, { codigo: 'SAN', nombre: 'Sanidad', color: r.familia.color });
-    assert.equal(r.espacios.length, 37);
+    assert.equal(r.espacios.length, 39);
     assert.deepEqual(Object.keys(r.espacios[0]).sort(), ['codigo', 'habitual', 'id', 'nombre', 'planta']);
     const habituales = r.espacios.filter((e) => e.habitual).map((e) => e.codigo);
     assert.ok(habituales.includes('P1-04') && !habituales.includes('P1-01'));
