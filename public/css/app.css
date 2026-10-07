@@ -630,3 +630,12 @@ dialog.modal::backdrop { background: rgba(14, 17, 33, .5); backdrop-filter: blur
 .barra-uso { height: 10px; margin-top: 10px; border-radius: 5px; background: var(--neutro-suave); overflow: hidden; }
 .barra-uso span { display: block; height: 100%; border-radius: 5px; background: var(--acento); transition: width .3s; }
 .barra-uso span.alta { background: var(--peligro); }
+
+/* Texto distinto según haya pantalla táctil (móvil) o ratón (ordenador) */
+.solo-raton { display: inline; }
+.solo-tactil { display: none; }
+@media (pointer: coarse) {
+  .solo-raton { display: none; }
+  .solo-tactil { display: inline; }
+  button.solo-tactil { display: inline-flex; }
+}

@@ -129,3 +129,7 @@ details.mas .mas-cuerpo { padding: 0 16px 16px; display: flex; flex-direction: c
 .foto-texto small { font-size: 13px; color: var(--tenue); }
 .foto-texto small.error { color: var(--peligro); font-weight: 600; }
 .movil .enlace { all: unset; align-self: flex-start; cursor: pointer; color: var(--peligro); font-size: 14px; font-weight: 600; padding: 4px 2px; }
+
+/* Debajo del botón de cámara: galería y quitar */
+.foto-extra { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.movil .enlace.enlace-sec { color: var(--acento-2); }

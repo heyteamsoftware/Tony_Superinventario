@@ -137,13 +137,18 @@ function pantallaFormulario() {
 
       <div class="campo" data-foto>
         <span>Foto (opcional)</span>
+        <!-- capture="environment": abre directamente la cámara trasera -->
+        <input type="file" accept="image/*" capture="environment" hidden data-foto-camara>
         <input type="file" accept="image/*" hidden data-foto-fichero>
         <button type="button" class="foto-boton" data-foto-elegir>
           <span class="foto-previa-al" data-foto-previa aria-hidden="true">📷</span>
-          <span class="foto-texto"><b data-foto-titulo>Hacer o elegir una foto</b>
+          <span class="foto-texto"><b data-foto-titulo>Hacer una foto</b>
             <small data-foto-estado>Se reduce sola: casi no gasta datos</small></span>
         </button>
-        <button type="button" class="enlace" data-foto-quitar hidden>Quitar la foto</button>
+        <div class="foto-extra">
+          <button type="button" class="enlace enlace-sec" data-foto-galeria>🖼 Elegir de la galería</button>
+          <button type="button" class="enlace" data-foto-quitar hidden>Quitar la foto</button>
+        </div>
         <input type="hidden" name="foto_id" value="">
       </div>
 
@@ -285,7 +290,7 @@ let subiendoFoto = false;
 function reiniciarFoto(form) {
   form.elements.foto_id.value = '';
   $('[data-foto-previa]', form).textContent = '📷';
-  $('[data-foto-titulo]', form).textContent = 'Hacer o elegir una foto';
+  $('[data-foto-titulo]', form).textContent = 'Hacer una foto';
   const estado = $('[data-foto-estado]', form);
   estado.textContent = 'Se reduce sola: casi no gasta datos';
   estado.classList.remove('error');
@@ -303,7 +308,7 @@ async function procesarFoto(form, archivo) {
     const subida = await subirFoto(blob);
     form.elements.foto_id.value = subida.id;
     pintar($('[data-foto-previa]', form), html`<img src="../api/fotos/${subida.id}/miniatura" alt="Tu foto">`);
-    $('[data-foto-titulo]', form).textContent = 'Cambiar la foto';
+    $('[data-foto-titulo]', form).textContent = 'Hacer otra foto';
     $('[data-foto-quitar]', form).hidden = false;
     marcar(`Foto lista · ${kb(subida.bytes)}`);
   } catch (err) {
@@ -329,10 +334,11 @@ raiz.addEventListener('submit', (e) => {
   else if (e.target.matches('[data-alta]')) guardarAlta(e.target);
 });
 on(raiz, 'click', '[data-cambiar]', () => pantallaNombre());
-on(raiz, 'click', '[data-foto-elegir]', () => { if (!subiendoFoto) $('[data-foto-fichero]', raiz).click(); });
+on(raiz, 'click', '[data-foto-elegir]', () => { if (!subiendoFoto) $('[data-foto-camara]', raiz).click(); });
+on(raiz, 'click', '[data-foto-galeria]', () => { if (!subiendoFoto) $('[data-foto-fichero]', raiz).click(); });
 on(raiz, 'click', '[data-foto-quitar]', () => reiniciarFoto($('[data-alta]', raiz)));
 raiz.addEventListener('change', (e) => {
-  if (!e.target.matches('[data-foto-fichero]')) return;
+  if (!e.target.matches('[data-foto-fichero], [data-foto-camara]')) return;
   const archivo = e.target.files[0];
   e.target.value = ''; // permite volver a elegir el mismo fichero
   if (archivo) procesarFoto($('[data-alta]', raiz), archivo);
