@@ -8,7 +8,7 @@ No usa contraseñas: al entrar se pide el nombre, que queda en el historial de c
 
 ## Qué hace
 
-- **Plano interactivo** (pantalla principal) con las 3 plantas y los 36 espacios calcados del plano del centro (`plano.jpg`).
+- **Plano interactivo** (pantalla principal) con las 3 plantas y los 37 espacios (los del plano del centro más la subsala Ateca-Radio) (`plano.jpg`).
   - Selector de planta tipo ascensor, con el número de artículos de cada una.
   - Tres modos de color: **Plano** (colores originales), **Material** (mapa de calor por cantidad) y **Revisiones** (al día / pronto / vencida).
   - Filtro por familia: resalta las aulas donde tiene material y marca con borde discontinuo las que usa habitualmente.

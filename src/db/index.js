@@ -174,6 +174,21 @@ const MIGRACIONES = [
       CREATE INDEX idx_articulos_foto ON articulos(foto_id) WHERE foto_id IS NOT NULL;
     `);
   },
+
+  // Subsala "Ateca-Radio" dentro de ATECA (planta baja), de uso habitual de
+  // Radio Atlante. Se dibuja encima de ATECA, hundida unos píxeles, igual que +21.
+  // INSERT OR IGNORE: si el espacio ya existiera, no se duplica.
+  function subsalaAtecaRadio(db) {
+    const planta = db.prepare("SELECT id FROM plantas WHERE codigo = 'PB'").get();
+    db.prepare(`
+      INSERT OR IGNORE INTO espacios (codigo, nombre, planta_id, tipo, grupos, color, x, y, w, h)
+      VALUES ('PB-13', 'Ateca-Radio', ?, 'taller', 'Radio Atlante', '#e58bb0', 476, 325, 144, 102)`).run(planta.id);
+    const espacio = db.prepare("SELECT id FROM espacios WHERE codigo = 'PB-13'").get();
+    const radio = db.prepare("SELECT id FROM familias WHERE codigo = 'RAD'").get();
+    if (radio) {
+      db.prepare('INSERT OR IGNORE INTO espacio_familias (espacio_id, familia_id) VALUES (?, ?)').run(espacio.id, radio.id);
+    }
+  },
 ];
 
 // `version` permite abrir una base de datos en una versión anterior del

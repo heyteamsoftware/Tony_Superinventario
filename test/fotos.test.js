@@ -367,6 +367,6 @@ describe('migración: fotos', () => {
   test('el esquema nuevo tiene la tabla y la columna, y los artículos sin foto siguen igual', async () => {
     const art = (await app.post('/api/articulos', nuevo({ nombre: 'Sin foto' }))).body;
     assert.equal(art.foto_id, null);
-    assert.equal(app.db.prepare('PRAGMA user_version').get().user_version, 3);
+    assert.equal(app.db.prepare('PRAGMA user_version').get().user_version, 4);
   });
 });
