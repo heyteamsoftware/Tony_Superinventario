@@ -1,6 +1,7 @@
 import PDFDocument from 'pdfkit';
 import { fileURLToPath } from 'node:url';
 import { listar } from './articulos.js';
+import { miniaturaParaPdf } from './fotos.js';
 import { familiasConRevision } from './revisiones.js';
 import { noEncontrado } from '../lib/errores.js';
 
@@ -81,9 +82,31 @@ export function datosInforme(db, familiaId, { bajas = false } = {}) {
 
 // ── PDF ──────────────────────────────────────────────────────────────────
 
-export function pdfInventarioFamilia(db, familiaId, { bajas = false, valores = false, usuario = '' } = {}) {
+// Lado (en puntos) de la mini foto de cada artículo en el PDF.
+const FOTO = 30;
+
+// Miniaturas (JPEG) de las fotos de los artículos del informe, por id de foto.
+// Son pocas y diminutas, y se piden de 8 en 8 para no saturar la CPU.
+async function cargarMiniaturas(datos, dirFotos) {
+  const ids = new Set();
+  for (const p of datos.plantas) for (const e of p.espacios) for (const a of e.articulos) if (a.foto_id) ids.add(a.foto_id);
+  const lista = [...ids];
+  const mapa = new Map();
+  for (let i = 0; i < lista.length; i += 8) {
+    await Promise.all(lista.slice(i, i + 8).map(async (id) => {
+      const jpeg = await miniaturaParaPdf(dirFotos, id);
+      if (jpeg) mapa.set(id, jpeg);
+    }));
+  }
+  return mapa;
+}
+
+export async function pdfInventarioFamilia(db, familiaId, { bajas = false, valores = false, fotos = false, dirFotos = null, usuario = '' } = {}) {
   const datos = datosInforme(db, familiaId, { bajas });
   const { familia, totales } = datos;
+  // Con la opción de fotos, solo se añade la columna si algún artículo tiene foto.
+  const miniaturas = fotos ? await cargarMiniaturas(datos, dirFotos) : new Map();
+  const conFotos = miniaturas.size > 0;
   const ahora = new Date();
 
   const doc = new PDFDocument({
@@ -110,10 +133,11 @@ export function pdfInventarioFamilia(db, familiaId, { bajas = false, valores = f
   // Columnas de la tabla (la de "Artículo" ocupa el espacio sobrante).
   const columnas = [
     { id: 'check', titulo: '', ancho: 16 },
-    { id: 'codigo', titulo: 'Código', ancho: 60 },
+    ...(conFotos ? [{ id: 'foto', titulo: 'Foto', ancho: FOTO + 8 }] : []),
+    { id: 'codigo', titulo: 'Código', ancho: conFotos ? 58 : 60 },
     { id: 'articulo', titulo: 'Artículo', ancho: 0 },
-    { id: 'categoria', titulo: 'Categoría', ancho: 78 },
-    { id: 'ubicacion', titulo: 'Ubicación', ancho: 72 },
+    { id: 'categoria', titulo: 'Categoría', ancho: conFotos ? 68 : 78 },
+    { id: 'ubicacion', titulo: 'Ubicación', ancho: conFotos ? 64 : 72 },
     { id: 'estado', titulo: 'Estado', ancho: 50 },
     { id: 'cantidad', titulo: 'Cant.', ancho: 32, derecha: true },
     ...(valores ? [{ id: 'valor', titulo: 'Valor total', ancho: 58, derecha: true }] : []),
@@ -218,15 +242,32 @@ export function pdfInventarioFamilia(db, familiaId, { bajas = false, valores = f
     alto = Math.max(alto,
       doc.heightOfString(limpio(a.categoria_nombre ?? '—'), { width: col('categoria').ancho - 6 }),
       doc.heightOfString(limpio(a.ubicacion_detalle || '—'), { width: col('ubicacion').ancho - 6 }));
-    return { alto: alto + 8, detalle };
+    const tieneFoto = conFotos && miniaturas.has(a.foto_id);
+    return { alto: Math.max(alto + 8, tieneFoto ? FOTO + 8 : 0), detalle, tieneFoto };
   }
 
-  function pintarFila(a, { alto, detalle }, par) {
+  // Cada foto distinta se incrusta una sola vez aunque la usen varios artículos.
+  const imagenes = new Map();
+  const imagen = (id) => {
+    if (!imagenes.has(id)) imagenes.set(id, doc.openImage(miniaturas.get(id)));
+    return imagenes.get(id);
+  };
+
+  function pintarFila(a, { alto, detalle, tieneFoto }, par) {
     const y = doc.y;
     const baja = a.estado === 'baja';
     if (par) doc.rect(X, y, ANCHO, alto).fill('#fafbfd');
     // Casilla para marcar en la revisión física
     doc.rect(col('check').x + 3, y + 4, 8.5, 8.5).lineWidth(0.7).strokeColor('#9aa1bd').stroke();
+
+    if (tieneFoto) {
+      const fx = col('foto').x + 4;
+      const fy = y + 4;
+      doc.save().roundedRect(fx, fy, FOTO, FOTO, 4).clip();
+      doc.image(imagen(a.foto_id), fx, fy, { width: FOTO, height: FOTO });
+      doc.restore();
+      doc.roundedRect(fx, fy, FOTO, FOTO, 4).lineWidth(0.5).strokeColor(C.linea).stroke();
+    }
 
     const texto = (id, valor, opciones = {}) => doc.text(limpio(valor), col(id).x + 3, y + 4, { width: col(id).ancho - 6, ...opciones });
     doc.fillColor(C.tenue).font('Courier-Bold').fontSize(7.6);

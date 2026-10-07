@@ -85,6 +85,8 @@ export function crearApi(db, { dirFotos = null } = {}) {
     const { pdf, familia } = await informes.pdfInventarioFamilia(db, id(req), {
       bajas: req.query.bajas === '1',
       valores: req.query.valores === '1',
+      fotos: req.query.fotos === '1',
+      dirFotos,
       usuario: String(req.query.por ?? '').slice(0, 80),
     });
     const nombre = `inventario-${familia.codigo}-${new Date().toISOString().slice(0, 10)}.pdf`;

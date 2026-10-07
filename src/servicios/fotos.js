@@ -1,5 +1,6 @@
 import { randomBytes } from 'node:crypto';
 import { mkdirSync, writeFileSync, rmSync, readdirSync, statSync } from 'node:fs';
+import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { ErrorApi, datosNoValidos } from '../lib/errores.js';
 import { ahora } from '../lib/texto.js';
@@ -82,6 +83,32 @@ async function recodificar(buffer) {
     .toBuffer();
 
   return { principal: principal.data, miniatura, ancho: principal.info.width, alto: principal.info.height };
+}
+
+// Miniatura para el informe PDF. pdfkit solo admite JPEG y PNG (no WebP), así que
+// se parte de la miniatura de 320 px y se recorta a un cuadrado de 120 px en JPEG
+// (unos pocos KB). Las fotos nunca cambian, así que se guardan en memoria.
+const CACHE_PDF_MAX = 1000;
+const cachePdf = new Map();
+export const LADO_MINIATURA_PDF = 120;
+
+export async function miniaturaParaPdf(dir, id) {
+  if (!dir || !esIdFoto(id)) return null;
+  const clave = `${dir}|${id}`;
+  if (cachePdf.has(clave)) return cachePdf.get(clave);
+  try {
+    const sharp = await obtenerSharp();
+    const original = await readFile(rutaFoto(dir, id, true));
+    const jpeg = await sharp(original)
+      .resize(LADO_MINIATURA_PDF, LADO_MINIATURA_PDF, { fit: 'cover' })
+      .jpeg({ quality: 72 })
+      .toBuffer();
+    if (cachePdf.size >= CACHE_PDF_MAX) cachePdf.delete(cachePdf.keys().next().value);
+    cachePdf.set(clave, jpeg);
+    return jpeg;
+  } catch {
+    return null; // foto borrada o ilegible: el informe sale igual, sin ella
+  }
 }
 
 export const rutaFoto = (dir, id, miniatura = false) => join(dir, `${id}${miniatura ? '-m' : ''}.webp`);
