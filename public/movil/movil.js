@@ -1,6 +1,7 @@
 import { html, pintar, $, $$, on, aviso } from '../js/ui.js';
 import { iniciales } from '../js/usuario.js';
 import { comprimirFoto, kb } from '../js/foto.js';
+import { idVisitante } from '../js/visitas.js';
 
 // Inventario móvil. El QR de cada familia trae un código secreto
 // (?t=...) que solo permite VER el formulario de alta y AÑADIR material de esa
@@ -374,5 +375,12 @@ raiz.addEventListener('change', (e) => {
     return;
   }
   document.title = `Inventario móvil · ${datos.familia.nombre}`;
+  // Cuenta la visita (sin esperar ni molestar si falla).
+  const id = idVisitante();
+  if (id) {
+    fetch(new URL(`../api/movil/${encodeURIComponent(token)}/visita`, location.href), {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }),
+    }).catch(() => {});
+  }
   if (nombre) pantallaFormulario(); else pantallaNombre();
 })();

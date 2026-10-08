@@ -13,6 +13,7 @@ import * as revisiones from './servicios/revisiones.js';
 import * as informes from './servicios/informes.js';
 import * as movil from './servicios/movil.js';
 import * as fotos from './servicios/fotos.js';
+import * as visitas from './servicios/visitas.js';
 import { crearApiMovil } from './api-movil.js';
 
 // Sin contraseñas: cada petición lleva el nombre de quien la hace en la
@@ -106,6 +107,11 @@ export function crearApi(db, { dirFotos = null } = {}) {
     catalogo.eliminarCategoria(db, id(req));
     res.status(204).end();
   });
+
+  // ── Visitantes únicos ───────────────────────────────────────────────────
+  // El navegador manda su identificador aleatorio anónimo; se cuentan los distintos.
+  api.get('/visitas', (req, res) => res.json(visitas.estadisticasVisitas(db)));
+  api.post('/visitas', (req, res) => res.json(visitas.registrarVisita(db, req.body?.id, 'app', req.ip)));
 
   // ── Fotos ──────────────────────────────────────────────────────────────
   // La foto se sube aparte (cuerpo = la imagen) y luego se asocia al artículo

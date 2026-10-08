@@ -2,6 +2,7 @@ import { meta, recargarMeta, alCambiarMeta } from './estado.js';
 import { usuarioActual, guardarUsuario, iniciales } from './usuario.js';
 import { html, pintar, abrirDialogo, $, $$, avisoError } from './ui.js';
 import { abrirFicha } from './componentes/articulo.js';
+import { registrarVisita, consultarVisitas } from './visitas.js';
 
 // Cada vista exporta montar(raiz, { params, query }) y puede devolver una
 // función de limpieza que se llama al salir de ella.
@@ -97,6 +98,24 @@ function pintarAvisosMenu() {
   marca.title = `${n} familias con la revisión vencida`;
 }
 
+// ── Contador de visitantes únicos (arriba a la derecha) ─────────────────────
+function pintarVisitantes(v) {
+  const caja = $('#visitantes');
+  $('#visitantes-n').textContent = new Intl.NumberFormat('es-ES').format(v.unicos);
+  const texto = `Visitantes únicos: ${v.unicos} · hoy: ${v.hoy} · desde el QR de inventario móvil: ${v.por_qr}`;
+  caja.title = texto;
+  caja.setAttribute('aria-label', texto);
+}
+
+async function iniciarVisitantes() {
+  const refrescar = () => consultarVisitas().then(pintarVisitantes).catch(() => { /* sin contador */ });
+  try {
+    pintarVisitantes(await registrarVisita()); // anota esta visita (una vez por carga) y pinta la cifra
+  } catch { /* sin contador */ }
+  setInterval(refrescar, 2 * 60_000);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) refrescar(); });
+}
+
 // ── Arranque ────────────────────────────────────────────────────────────────
 async function iniciar() {
   $('#boton-usuario').addEventListener('click', () => pedirUsuario());
@@ -109,6 +128,7 @@ async function iniciar() {
   window.addEventListener('hashchange', navegar);
   alCambiarMeta(pintarAvisosMenu);
   pintarUsuario();
+  iniciarVisitantes(); // sin esperar: no debe retrasar la carga
 
   try {
     await recargarMeta();

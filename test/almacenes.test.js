@@ -109,7 +109,7 @@ describe('migración: almacenes de Seguridad', () => {
         { codigo: 'PB-14', nombre: 'Almacén Campo de Maniobras', planta: 'PB', tipo: 'almacen', familias: 'SEA' },
       ]);
       assert.equal(actual.prepare('SELECT COUNT(*) AS n FROM articulos').get().n, 1, 'los datos existentes se conservan');
-      assert.equal(actual.prepare('PRAGMA user_version').get().user_version, 5);
+      assert.equal(actual.prepare('PRAGMA user_version').get().user_version, 6);
       actual.close();
 
       const otra = abrirDb(fichero);

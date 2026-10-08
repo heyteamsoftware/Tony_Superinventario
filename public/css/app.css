@@ -100,6 +100,14 @@ button, input, select, textarea { font: inherit; color: inherit; }
 }
 .usuario:hover { background: rgba(255, 255, 255, .08); }
 .usuario .avatar { width: 28px; height: 28px; font-size: 12px; }
+/* Visitantes únicos: icono de persona y cifra, arriba a la derecha */
+.visitantes {
+  display: inline-flex; align-items: center; gap: 6px; flex: none; height: 36px; padding: 0 13px 0 11px;
+  border-radius: 18px; border: 1px solid rgba(255, 255, 255, .12); background: rgba(255, 255, 255, .05);
+  color: #cfd4ea; font-size: 14px; cursor: default; white-space: nowrap;
+}
+.visitantes svg { color: #9aa1bd; }
+.visitantes b { font-weight: 700; font-variant-numeric: tabular-nums; color: #fff; }
 .usuario span:last-child { overflow: hidden; text-overflow: ellipsis; }
 .avatar {
   display: inline-grid; place-items: center; flex: none;
@@ -539,9 +547,14 @@ dialog.modal::backdrop { background: rgba(14, 17, 33, .5); backdrop-filter: blur
 @media (max-width: 1100px) {
   .nav a { padding: 7px 9px; }
   .busqueda-global { display: none; }
+  .usuario { margin-left: auto; } /* sin buscador que empuje, el usuario y el contador van a la derecha */
 }
 @media (max-width: 900px) {
-  .cabecera { gap: 10px; padding: 0 12px; overflow-x: auto; }
+  .cabecera { gap: 8px; padding: 0 10px; }
+  .nav { flex: 1; min-width: 0; overflow-x: auto; scrollbar-width: none; }
+  .nav::-webkit-scrollbar { display: none; }
+  .nav a { white-space: nowrap; flex: none; }
+  .visitantes { padding: 0 10px 0 9px; }
   .marca-texto { display: none; }
   .usuario span:last-child { display: none; }
   .usuario { padding: 0 4px; }

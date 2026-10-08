@@ -219,6 +219,23 @@ const MIGRACIONES = [
       grupos: 'Exterior · Campo de Maniobras', color: '#c9e4b8', x: 470, y: 442, w: 232, h: 55, familias: ['SEA'],
     });
   },
+
+  // Contador de visitantes únicos. Cada navegador genera un identificador
+  // aleatorio y anónimo; aquí solo se guarda su huella SHA-256 (no se puede
+  // volver al identificador), sin IP ni ningún dato personal.
+  function visitantesUnicos(db) {
+    db.exec(`
+      CREATE TABLE visitantes (
+        id       TEXT PRIMARY KEY,            -- sha256 del identificador aleatorio del navegador
+        primera  TEXT NOT NULL,
+        ultima   TEXT NOT NULL,
+        visitas  INTEGER NOT NULL DEFAULT 1,  -- veces que ha abierto la aplicación
+        app      INTEGER NOT NULL DEFAULT 0,  -- ha entrado a la aplicación
+        qr       INTEGER NOT NULL DEFAULT 0   -- ha entrado desde un QR de inventario móvil
+      );
+      CREATE INDEX idx_visitantes_ultima ON visitantes(ultima);
+    `);
+  },
 ];
 
 // `version` permite abrir una base de datos en una versión anterior del

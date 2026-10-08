@@ -78,7 +78,7 @@ describe('migración: subsala Ateca-Radio', () => {
                                        JOIN espacios e ON e.id = ef.espacio_id WHERE e.codigo = 'PB-13'`).all();
       assert.deepEqual(habitual.map((h) => h.codigo), ['RAD']);
       assert.equal(actual.prepare('SELECT COUNT(*) AS n FROM articulos').get().n, 1, 'los datos existentes se conservan');
-      assert.equal(actual.prepare('PRAGMA user_version').get().user_version, 5);
+      assert.equal(actual.prepare('PRAGMA user_version').get().user_version, 6);
       actual.close();
 
       // Volver a abrir no la duplica.

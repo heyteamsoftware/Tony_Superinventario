@@ -8,6 +8,8 @@ const PUBLICO = fileURLToPath(new URL('../public', import.meta.url));
 export function crearApp(db, { dirFotos = null } = {}) {
   const app = express();
   app.disable('x-powered-by');
+  // Detrás de Apache (mismo equipo): así req.ip es la IP real del visitante y no 127.0.0.1.
+  app.set('trust proxy', 'loopback');
 
   app.use((req, res, next) => {
     res.set({

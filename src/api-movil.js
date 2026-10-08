@@ -2,6 +2,7 @@ import { Router, json, raw } from 'express';
 import { ErrorApi } from './lib/errores.js';
 import * as movil from './servicios/movil.js';
 import * as fotos from './servicios/fotos.js';
+import * as visitas from './servicios/visitas.js';
 
 // Rutas públicas del QR de inventario móvil (/api/movil/:token/...; la dirección
 // antigua /api/alumno/... sigue funcionando para los QR ya repartidos).
@@ -31,6 +32,14 @@ export function crearApiMovil(db, { dirFotos = null } = {}) {
   r.post('/:token/articulos', (req, res) => {
     if (!movil.limites.altas.intentar(req.params.token)) throw movil.demasiadasPeticiones();
     res.status(201).json(movil.altaMovil(db, req.familia, req.body));
+  });
+
+  // Cuenta la visita de quien entra por el QR (mismo identificador anónimo que en la app,
+  // así quien entra por los dos sitios cuenta una sola vez). Va por aquí, con el token,
+  // para que el QR no necesite ninguna otra ruta de la API.
+  r.post('/:token/visita', (req, res) => {
+    visitas.registrarVisita(db, req.body?.id, 'qr', req.ip);
+    res.status(204).end();
   });
 
   // La foto se sube aparte y se asocia en el alta con foto_id. Mismo procesado y
