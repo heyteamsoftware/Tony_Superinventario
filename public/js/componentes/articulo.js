@@ -108,7 +108,7 @@ export async function formularioArticulo({ articulo = null, valores = {} } = {})
         lista.insertAdjacentHTML('beforeend', String(html`<option value="${nueva}"></option>`));
       }
       // Inventariado rápido: conserva familia, aula, categoría y estado.
-      for (const campo of ['nombre', 'marca', 'modelo', 'numero_serie', 'valor', 'descripcion', 'observaciones']) {
+      for (const campo of ['nombre', 'categoria', 'ubicacion_detalle', 'marca', 'modelo', 'numero_serie', 'valor', 'descripcion', 'observaciones']) {
         form.elements[campo].value = '';
       }
       form.elements.cantidad.value = 1;

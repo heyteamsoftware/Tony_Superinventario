@@ -166,10 +166,25 @@ function comprobarReferencias(db, datos) {
 
 // El código es la etiqueta física del artículo: se genera una vez por familia
 // y no cambia nunca (tampoco se reutiliza tras un borrado).
+// Primero se reutilizan los números de artículos eliminados (el menor), y solo
+// cuando no quedan se avanza el correlativo.
 function siguienteCodigo(db, familiaId) {
   const fam = db.prepare('SELECT codigo, siguiente_num FROM familias WHERE id = ?').get(familiaId);
+  const libre = db.prepare('SELECT numero FROM codigos_libres WHERE familia_id = ? ORDER BY numero LIMIT 1').get(familiaId);
+  if (libre) {
+    db.prepare('DELETE FROM codigos_libres WHERE familia_id = ? AND numero = ?').run(familiaId, libre.numero);
+    return `${fam.codigo}-${String(libre.numero).padStart(5, '0')}`;
+  }
   db.prepare('UPDATE familias SET siguiente_num = siguiente_num + 1 WHERE id = ?').run(familiaId);
   return `${fam.codigo}-${String(fam.siguiente_num).padStart(5, '0')}`;
+}
+
+// Un artículo eliminado libera su número para la familia.
+function liberarCodigo(db, art) {
+  const numero = Number(art.codigo.slice(art.codigo.lastIndexOf('-') + 1));
+  if (Number.isInteger(numero) && numero > 0) {
+    db.prepare('INSERT OR IGNORE INTO codigos_libres (familia_id, numero) VALUES (?, ?)').run(art.familia_id, numero);
+  }
 }
 
 const refEspacio = (db, id) => db.prepare('SELECT id, codigo, nombre FROM espacios WHERE id = ?').get(id);
@@ -348,6 +363,7 @@ export function eliminar(db, id, usuario) {
       cantidad: art.cantidad, estado: art.estado,
     }, usuario);
     db.prepare('DELETE FROM articulos WHERE id = ?').run(id);
+    liberarCodigo(db, art);
   });
 }
 

@@ -151,9 +151,9 @@ describe('artículos', () => {
     const hist = (await app.get('/api/movimientos?tipo=eliminacion')).body;
     assert.ok(hist.items.some((m) => m.articulo_codigo === art.codigo && m.articulo_id === null));
 
-    // El código no se reutiliza.
+    // El código eliminado vuelve a estar libre y el siguiente alta lo reutiliza.
     const otro = (await app.post('/api/articulos', nuevo())).body;
-    assert.ok(otro.codigo > art.codigo);
+    assert.equal(otro.codigo, art.codigo);
   });
 });
 

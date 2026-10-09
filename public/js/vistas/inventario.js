@@ -37,7 +37,8 @@ export function montar(raiz, { query }) {
       <div class="pagina-cabecera">
         <div class="titulo"><h1>Inventario</h1><p data-resumen>Todo el material del centro en una tabla.</p></div>
         <div class="acciones">
-          <a class="boton" data-exportar href="#">⭳ Exportar a Excel</a>
+          <a class="boton" data-exportar href="#" title="Hoja con los datos (sin fotos)">⭳ Exportar CSV</a>
+          <a class="boton" data-exportar-xlsx href="#" title="Hoja de Excel con una mini foto por artículo">⭳ Excel con fotos</a>
           <button type="button" class="boton" data-accion="pdf">📄 PDF por familia</button>
           <button type="button" class="boton primario" data-accion="nuevo">＋ Nuevo artículo</button>
         </div>
@@ -65,6 +66,7 @@ export function montar(raiz, { query }) {
   const el = {
     filtros: $('[data-filtros]', raiz), tabla: $('[data-tabla]', raiz), paginacion: $('[data-paginacion]', raiz),
     lote: $('[data-lote]', raiz), resumen: $('[data-resumen]', raiz), exportar: $('[data-exportar]', raiz),
+    exportarXlsx: $('[data-exportar-xlsx]', raiz),
   };
 
   const parametros = () => ({ ...filtros, pagina: filtros.pagina || 1 });
@@ -72,6 +74,7 @@ export function montar(raiz, { query }) {
   async function cargar() {
     history.replaceState(null, '', `#/inventario${consulta({ ...filtros, orden: filtros.orden === 'codigo' ? '' : filtros.orden, dir: filtros.dir === 'asc' ? '' : filtros.dir, pagina: filtros.pagina > 1 ? filtros.pagina : '' })}`);
     el.exportar.href = `api/articulos/exportar.csv${consulta({ ...filtros, pagina: '' })}`;
+    el.exportarXlsx.href = `api/articulos/exportar.xlsx${consulta({ ...filtros, pagina: '' })}`;
     try {
       datos = await api.get(`/articulos${consulta({ ...parametros(), por_pagina: POR_PAGINA })}`);
       pintarTabla();

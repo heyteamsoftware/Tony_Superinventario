@@ -12,8 +12,9 @@ before(async () => { app = await arrancar(); });
 after(() => app.cerrar());
 
 describe('categorías sin lista fija', () => {
-  test('una base de datos nueva no trae categorías predefinidas', () => {
-    assert.deepEqual(app.meta.categorias, []);
+  test('una base de datos nueva trae solo las categorías del almacén de Seguridad', () => {
+    assert.equal(app.meta.categorias.length, 14);
+    assert.ok(app.meta.categorias.some((c) => c.nombre === 'Otros'));
   });
 
   test('se crean al escribirlas y se reutilizan sin distinguir tildes ni mayúsculas', async () => {
@@ -26,7 +27,8 @@ describe('categorías sin lista fija', () => {
     assert.notEqual(c.categoria_id, a.categoria_id);
 
     const lista = (await app.get('/api/categorias')).body;
-    assert.deepEqual(lista.map((x) => x.nombre).sort(), ['Fungibles', 'Material sanitario']);
+    const nombres = lista.map((x) => x.nombre);
+    assert.ok(nombres.includes('Fungibles') && nombres.includes('Material sanitario'));
     assert.equal(lista.find((x) => x.nombre === 'Material sanitario').articulos, 2);
   });
 
@@ -73,9 +75,10 @@ describe('migración: categorías predefinidas', () => {
 
       const actual = abrirDb(fichero);
       const quedan = actual.prepare('SELECT nombre FROM categorias').all().map((c) => c.nombre);
-      assert.deepEqual(quedan, ['Mobiliario']);
+      assert.ok(quedan.includes('Mobiliario'), 'la usada se conserva');
+      assert.ok(!quedan.includes('Audiovisuales'), 'las que no usa nadie se retiran');
       assert.equal(actual.prepare('SELECT categoria_id FROM articulos').get().categoria_id, mobiliario);
-      assert.equal(actual.prepare('PRAGMA user_version').get().user_version, 6);
+      assert.equal(actual.prepare('PRAGMA user_version').get().user_version, 7);
       actual.close();
     } finally {
       rmSync(dir, { recursive: true, force: true });

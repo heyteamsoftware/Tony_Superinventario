@@ -166,7 +166,7 @@ function pantallaFormulario() {
         </div></fieldset>
 
       <label class="campo"><span>Categoría</span>
-        <input name="categoria" list="al-categorias" maxlength="80" autocomplete="off" placeholder="Elige una o escribe una nueva" value="${ultimo.categoria ?? ''}">
+        <input name="categoria" list="al-categorias" maxlength="80" autocomplete="off" placeholder="Elige una o escribe una nueva">
         <datalist id="al-categorias" data-categorias>${datos.categorias.map((c) => html`<option value="${c}"></option>`)}</datalist>
         <span class="ayuda">Si escribes una categoría nueva, se guarda y la podrá elegir todo el mundo.</span></label>
 
@@ -249,7 +249,7 @@ async function guardarAlta(form) {
     const r = await llamar('/articulos', cuerpo);
     const hora = new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
     lista = [{ codigo: r.codigo, nombre: r.nombre, cantidad: r.cantidad, espacio: r.espacio_codigo, hora }, ...lista].slice(0, 30);
-    ultimo = { espacio_id: cuerpo.espacio_id, estado: cuerpo.estado, categoria: cuerpo.categoria.trim() };
+    ultimo = { espacio_id: cuerpo.espacio_id, estado: cuerpo.estado };
     guardar(claveLista, lista);
     guardar(claveUltimo, ultimo);
 
@@ -266,8 +266,8 @@ async function guardarAlta(form) {
         <small>${r.cantidad} × ${r.nombre} · ${r.espacio_codigo}</small></div></div>`);
     pintar($('[data-lista]', form), listaHtml());
 
-    // Listo para el siguiente: se conservan aula, estado, categoría y ubicación.
-    for (const campo of ['nombre', 'marca', 'modelo', 'numero_serie', 'observaciones']) f[campo].value = '';
+    // Listo para el siguiente: se conservan solo el aula y el estado; el resto se limpia.
+    for (const campo of ['nombre', 'categoria', 'ubicacion_detalle', 'marca', 'modelo', 'numero_serie', 'observaciones']) f[campo].value = '';
     f.cantidad.value = 1;
     reiniciarFoto(form);
     $('[data-exito]', form).scrollIntoView({ block: 'nearest', behavior: 'smooth' });

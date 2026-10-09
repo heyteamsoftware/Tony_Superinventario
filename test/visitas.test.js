@@ -168,7 +168,7 @@ describe('migración: visitantes', () => {
       const actual = abrirDb(fichero);
       assert.equal(actual.prepare('SELECT COUNT(*) AS n FROM visitantes').get().n, 0);
       assert.equal(actual.prepare('SELECT COUNT(*) AS n FROM articulos').get().n, 1);
-      assert.equal(actual.prepare('PRAGMA user_version').get().user_version, 6);
+      assert.equal(actual.prepare('PRAGMA user_version').get().user_version, 7);
       actual.close();
     } finally {
       rmSync(dir, { recursive: true, force: true });

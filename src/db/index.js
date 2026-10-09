@@ -236,6 +236,27 @@ const MIGRACIONES = [
       CREATE INDEX idx_visitantes_ultima ON visitantes(ultima);
     `);
   },
+
+  // Dos cambios de numeración y categorías:
+  //  · los números de los artículos ELIMINADOS quedan libres y el siguiente alta
+  //    los reutiliza (el de menor número primero). Un artículo dado de baja conserva
+  //    su código para siempre;
+  //  · categorías del almacén de Seguridad y Emergencias. "Otros" al final.
+  function reutilizarCodigosYCategoriasSeguridad(db) {
+    db.exec(`
+      CREATE TABLE codigos_libres (
+        familia_id  INTEGER NOT NULL REFERENCES familias(id) ON DELETE CASCADE,
+        numero      INTEGER NOT NULL,
+        PRIMARY KEY (familia_id, numero)
+      );
+    `);
+    const insertar = db.prepare('INSERT OR IGNORE INTO categorias (nombre) VALUES (?)');
+    for (const nombre of [
+      'Accidente de Tráfico', 'EPIs', 'Extinción de Incendios', 'Herramientas y ferretería',
+      'Incendio Forestal', 'Incendio Urbano', 'Logística', 'Rescate Tierra', 'Rescate Acuático',
+      'Sanitario', 'Seguridad', 'Señalización', 'Transmisiones', 'Otros',
+    ]) insertar.run(nombre);
+  },
 ];
 
 // `version` permite abrir una base de datos en una versión anterior del

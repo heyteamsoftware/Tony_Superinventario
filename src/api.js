@@ -14,6 +14,7 @@ import * as informes from './servicios/informes.js';
 import * as movil from './servicios/movil.js';
 import * as fotos from './servicios/fotos.js';
 import * as visitas from './servicios/visitas.js';
+import * as excel from './servicios/excel.js';
 import { crearApiMovil } from './api-movil.js';
 
 // Sin contraseñas: cada petición lleva el nombre de quien la hace en la
@@ -143,6 +144,18 @@ export function crearApi(db, { dirFotos = null } = {}) {
     const fecha = new Date().toISOString().slice(0, 10);
     res.attachment(`inventario-${fecha}.csv`).type('text/csv; charset=utf-8')
       .send(datos.exportarCsv(db, req.query, { orden: req.query.orden, dir: req.query.dir }));
+  });
+
+  // Hoja de cálculo con una columna de mini fotos (.xlsx)
+  api.get('/articulos/exportar.xlsx', async (req, res, next) => {
+    try {
+      const fecha = new Date().toISOString().slice(0, 10);
+      const buffer = await excel.generarExcel(db, dirFotos, req.query, { orden: req.query.orden, dir: req.query.dir });
+      res.attachment(`inventario-${fecha}.xlsx`)
+        .type('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet').send(Buffer.from(buffer));
+    } catch (err) {
+      next(err);
+    }
   });
 
   api.post('/articulos', (req, res) => res.status(201).json(articulos.crear(db, req.body, usuarioDe(req))));
